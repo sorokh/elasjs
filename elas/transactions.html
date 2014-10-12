@@ -1,0 +1,36 @@
+<div class="row">
+    <div class="col-md-8">
+
+        <h1>Recente Transacties</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        Zoeken <input width="200" ng-model="transactionsFilter">
+    </div>
+</div>
+<div class="blog">
+    <div class="row">
+        <div class="posts" ng-repeat="transaction in transactions | filter:transactionsFilter">
+            <div class="col-md-2">
+                <i class="fa fa-calendar"></i> <strong>{{transaction.date}}</strong>
+            </div>
+            <div class="col-md-4">
+                {{transaction.from}} aan {{transaction.to}}
+            </div>
+            <div class="col-md-6 text-right">
+                {{transaction.message}}
+            </div>
+        </div>
+        <div class="col-md-12">
+            <!-- Pagination -->
+            <div class="paging">
+                <span class='current'>1</span>
+                <a href='#'>2</a>
+                <span class="dots">&hellip;</span>
+                <a href='#'>6</a>
+                <a href="#">Volgende</a>
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>

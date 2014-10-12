@@ -1,0 +1,36 @@
+<div class="row">
+    <div class="col-md-8">
+
+        <h1>Leden</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        Zoeken <input width="200" ng-model="membersFilter">
+    </div>
+</div>
+<div class="blog">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="posts" ng-repeat="member in members | filter:membersFilter">
+                <div class="entry">
+                    <h4>{{member.firstName}} {{member.lastName}}</h4>
+                    <p>
+                        {{member.street}} {{member.streetNumber}}<span ng-show="member.streetBus"> bus {{member.streetBus}}</span><br>
+                        {{member.zipCode}} {{member.city}}<br>
+                        <span ng-show="member.phone"> {{member.phone}}</span><br>
+                        <span ng-show="member.email"><a ng-href="mailto:{{member.email}}">{{member.email}}</a><br></span>
+                    </p>
+                </div>
+            </div>
+            <!-- Pagination -->
+            <div class="paging">
+                <span class='current'>1</span>
+                <a href='#'>2</a>
+                <span class="dots">&hellip;</span>
+                <a href='#'>6</a>
+                <a href="#">Volgende</a>
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>

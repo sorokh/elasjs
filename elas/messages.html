@@ -1,0 +1,45 @@
+<div class="row">
+    <div class="col-md-8">
+
+        <h1>Recent Vraag en Aanbod</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        Zoeken <input width="200" ng-model="messagesFilter">
+    </div>
+</div>
+<div class="blog">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
+                <div class="entry">
+                    <div class="meta">
+                        <i class="fa fa-calendar"></i> {{message.date}} <i class="fa fa-user"></i> {{message.user}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
+                    </div>
+
+                    <h4>
+                        <span ng-show="message.type == 'offer'">(Aanbod) </span>
+                        <span ng-show="message.type == 'request'">(Vraag) </span>
+                        {{message.title}}
+                    </h4>
+                    <p>
+                        {{message.description}}<br>
+                        <span ng-show="message.price && message.priceUnit">{{message.price}} duimkes per {{message.priceUnit}}</span>
+                        <span ng-hide="message.price && message.priceUnit">Er werd geen vraagprijs ingegeven.</span>
+                        <br>
+                        <a href="">Toon alles details...</a>
+                    </p>
+                </div>
+            </div>
+            <!-- Pagination -->
+            <div class="paging">
+                <span class='current'>1</span>
+                <a href='#'>2</a>
+                <span class="dots">&hellip;</span>
+                <a href='#'>6</a>
+                <a href="#">Volgende</a>
+            </div>
+
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>
