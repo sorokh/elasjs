@@ -64,21 +64,21 @@ app.controller('elasController', function ($scope, $http) {
         title : "Oppas bij mij thuis op dinsdag 14/10 van 19u tot 22u30.",
         description: "Ik mag naar een vergadering gaan in Dendermonde. Mijn zoontjes (8 en 6) gaan rond 20u15 slapen, daarna kan je dus doen waar je zin in hebt. TV, internet, een boek lezen...",
         price: 15,
-        priceUnit: "uur",
-    });
+        priceUnit: "uur"
+    })
     messages.push({
         type : "request",
         user : "Nicole De Gols",
         date : "7/10/2014",
         title : "Wie gaat er binnenkort naar ikea ?",
-        description: "Wie wil FIXA zelfklevende meubeldoppen meebrengen ? 20 stuks in 1 verpakking. Er mogen 2 verpakkingen meekomen = in totaal 3 euro.",
+        description: "Wie wil FIXA zelfklevende meubeldoppen meebrengen ? 20 stuks in 1 verpakking. Er mogen 2 verpakkingen meekomen = in totaal 3 euro."
     });
     messages.push({
         type : "offer",
         user : "Dimitry D'hondt",
         date : "7/10/2014",
         title : "Vegetarische Kooklessen",
-        description: "Ik organiseer, vanuit EVA Dendermonde, een reeks van 6 vegetarische kooklessen. De nadruk ligt op alledaagse, lekkere recepten. Geen moeilijke recepten, en courant beschikbare ingrediënten. Er is beperkt plaats (5 personen). Inschrijven via mail voor 1/11/2014 graag !",
+        description: "Ik organiseer, vanuit EVA Dendermonde, een reeks van 6 vegetarische kooklessen. De nadruk ligt op alledaagse, lekkere recepten. Geen moeilijke recepten, en courant beschikbare ingrediënten. Er is beperkt plaats (5 personen). Inschrijven via mail voor 1/11/2014 graag !"
     });
     $scope.messages = messages;
 
