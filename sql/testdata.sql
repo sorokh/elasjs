@@ -1,6 +1,6 @@
 -- groups
-INSERT INTO "groups" VALUES ('8bf649b4-c50a-4ee9-9b02-877aa0a71849','LETS Regio Dendermonde','https://www.facebook.com/pages/LETS-Regio-Dendermonde/113915938675095?ref=ts&fref=ts', 'Beekveldstraat', '1A', '2', '9280', 'Lebbeke', '0495940592', 'letsdendermonde@gmail.com');
-INSERT INTO "groups" VALUES ('57561082-1506-41e8-a57e-98fee9289e0c','LETS Aalst-Oudenaarde', null, 'Wellekensstraat', '45', null, '9300', 'Aalst', null, 'PeterD@steunpuntwelzijn.be');
+INSERT INTO "communities" VALUES ('8bf649b4-c50a-4ee9-9b02-877aa0a71849','LETS Regio Dendermonde','https://www.facebook.com/pages/LETS-Regio-Dendermonde/113915938675095?ref=ts&fref=ts', 'Beekveldstraat', '1A', '2', '9280', 'Lebbeke', '0495940592', 'letsdendermonde@gmail.com');
+INSERT INTO "communities" VALUES ('57561082-1506-41e8-a57e-98fee9289e0c','LETS Aalst-Oudenaarde', null, 'Wellekensstraat', '45', null, '9300', 'Aalst', null, 'PeterD@steunpuntwelzijn.be');
 
 -- persons
 INSERT INTO "persons" VALUES ('9abe4102-6a29-4978-991e-2a30655030e6','Sabine','De Waele','Beekveldstraat','1A','2','9280','Lebbeke','0495541522','sabinedewaele@email.be', -10,'8bf649b4-c50a-4ee9-9b02-877aa0a71849');

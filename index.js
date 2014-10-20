@@ -22,14 +22,17 @@ var config = [
             phone: {},
             email: {},
             balance: {},
-            group: {references: '/groups'}
+            community: {references: '/communities'}
         }
     },
     {
         type: "/messages",
         map: {
             person: {references: '/persons'},
-            posted: {},
+            posted: {
+                onInsert: function(input) { return new Date().toISOString(); },
+                onUpdate: function(input) { return new Date().toISOString(); }
+            },
             type: {},
             title: {},
             description: {},
@@ -38,7 +41,7 @@ var config = [
         }
     },
     {
-        type: "/groups",
+        type: "/communities",
         map: {
             name: {},
             street: {},
@@ -53,8 +56,8 @@ var config = [
     {
         type: "/transactions",
         map: {
-            from: {references: '/persons'},
-            to: {references: '/persons'},
+            fromperson: {references: '/persons'},
+            toperson: {references: '/persons'},
             description: {},
             amount: {}
         }
@@ -91,7 +94,7 @@ var rest2pg_utils = {
 
         for (var key in mapping.map) {
             if (mapping.map.hasOwnProperty(key)) {
-                columnNames.push('"' + key +'"');
+                columnNames.push(key);
             }
         }
         var sqlColumnNames = '"guid",';
@@ -104,7 +107,6 @@ var rest2pg_utils = {
 
         return sqlColumnNames;
     }
-
 }
 
 
@@ -157,7 +159,7 @@ function rest2pg(config) {
                                 }
                             }
 
-                            rest2pg_utils.mapColumnsToObject(mapping, currentrow, element);
+                            rest2pg_utils.mapColumnsToObject(mapping, currentrow, element.$$expanded);
                         }
 
                         results.push(element);
@@ -217,11 +219,11 @@ function rest2pg(config) {
             var table = mapping.type.split("/")[1];
 
             var element = req.body;
-            element.guid = req.params.guid;
 
             // check and remove types from references.
             for (var key in mapping.map) {
                 if (mapping.map.hasOwnProperty(key)) {
+                    console.log(key);
                     if(mapping.map[key].references) {
                         var referencedType = mapping.map[key].references;
                         var referencedMapping = typeToConfig[referencedType];
@@ -238,9 +240,6 @@ function rest2pg(config) {
                 }
             }
 
-            console.log("PUT for resource " + req.route.path);
-            console.log(element);
-
             pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
                 var query = bits.SQL('select count(*) from ' + table).WHERE('"guid" = ', bits.$(req.params.guid));
 
@@ -252,19 +251,56 @@ function rest2pg(config) {
                     }
 
                     if(result.rows[0].count == 1) {
-                        // update
-                        console.log("update not implemented yet.");
+                        for (var key in mapping.map) {
+                            if (mapping.map.hasOwnProperty(key)) {
+                                if(mapping.map[key].onUpdate) {
+                                    var value = element[key];
+                                    var translated = mapping.map[key].onUpdate(value);
+                                    element[key] = translated;
+                                }
+                            }
+                        }
+
+                        console.log("updating resource " + req.route.path);
+                        console.log(element);
+
+                        var update =
+                            bits.UPDATE(table)
+                                .SET(element)
+                                ._('where guid=', $(req.params.guid));
+
+                        client.query(update.sql,update.params, function(err, result) {
+                            done();
+                            if (err) {
+                                console.log(err); resp.send("Error " + err);
+                                return;
+                            }
+                        });
                     } else {
-                        // insert
+                        element.guid = req.params.guid;
+                        for (var key in mapping.map) {
+                            if (mapping.map.hasOwnProperty(key)) {
+                                if(mapping.map[key].onInsert) {
+                                    var value = element[key];
+                                    var translated = mapping.map[key].onInsert(value);
+                                    element[key] = translated;
+                                }
+                            }
+                        }
+
                         var insert =
                             bits.INSERT.INTO(table,element);
+
+                        console.log("inserting resource " + req.route.path);
+                        console.log(element);
+                        console.log(insert.sql);
+                        console.log(insert.params);
                         client.query(insert.sql,insert.params, function(err, result) {
                             done();
                             if (err) {
                                 console.log(err); resp.send("Error " + err);
                                 return;
                             }
-                            console.log(result.rows);
                         });
                     }
                 });

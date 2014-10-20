@@ -1,8 +1,10 @@
+DROP TABLE IF EXISTS "messages";
 DROP TABLE IF EXISTS "transactions";
 DROP TABLE IF EXISTS "persons";
+DROP TABLE IF EXISTS "communities";
 DROP TABLE IF EXISTS "groups";
 
-CREATE TABLE "groups" (
+CREATE TABLE "communities" (
   "guid" character varying(36) unique,
   "name" character varying(256) unique,
   "facebook" character varying(256) unique,
@@ -27,13 +29,13 @@ CREATE TABLE "persons" (
   "phone" character varying(32),
   "email" character varying(32),
   "balance" integer,
-  "group" character varying(36) references "groups"(guid)
+  "community" character varying(36) references "communities"(guid)
 );
 
 CREATE TABLE "transactions" (
   "guid" character varying(36) unique,
-  "from" character varying(36) references "persons"(guid),
-  "to" character varying(36) references "persons"(guid),
+  "fromperson" character varying(36) references "persons"(guid),
+  "toperson" character varying(36) references "persons"(guid),
   "description" character varying(256),
   "amount" integer
 );
