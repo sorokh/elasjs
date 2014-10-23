@@ -10,21 +10,21 @@
 <div class="blog">
     <div class="row">
         <div class="col-md-12">
-            <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
+            <div class="posts" ng-repeat="message in messages.results | filter:messagesFilter">
                 <div class="entry">
                     <div class="meta">
-                        <i class="fa fa-calendar"></i> {{message.date}} <i class="fa fa-user"></i> {{message.user}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
+                        <i class="fa fa-calendar"></i> {{message.$$expanded.posted}} <i class="fa fa-user"></i> {{message.$$expanded.person.$$expanded.firstname}} {{message.$$expanded.person.$$expanded.lastname}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
                     </div>
 
                     <h4>
-                        <span ng-show="message.type == 'offer'">(Aanbod) </span>
-                        <span ng-show="message.type == 'request'">(Vraag) </span>
-                        {{message.title}}
+                        <span ng-show="message.$$expanded.type == 'offer'">(Aanbod) </span>
+                        <span ng-show="message.$$expanded.type == 'request'">(Vraag) </span>
+                        {{message.$$expanded.title}}
                     </h4>
                     <p>
-                        {{message.description}}<br>
-                        <span ng-show="message.price && message.priceUnit">{{message.price}} duimkes per {{message.priceUnit}}</span>
-                        <span ng-hide="message.price && message.priceUnit">Er werd geen vraagprijs ingegeven.</span>
+                        {{message.$$expanded.description}}<br>
+                        <span ng-show="message.$$expanded.price && message.$$expanded.priceUnit">{{message.price}} duimkes per {{message.priceUnit}}</span>
+                        <span ng-hide="message.$$expanded.price && message.$$expanded.priceUnit">Er werd geen vraagprijs ingegeven.</span>
                         <br>
                         <a href="">Toon alles details...</a>
                     </p>

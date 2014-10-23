@@ -12,4 +12,4 @@ INSERT INTO "transactions" VALUES ('147d360c-2bdf-4b6e-a210-3cb8ddf3ce9d', '9abe
 INSERT INTO "transactions" VALUES ('8371eda9-56bc-41d5-af26-bc81caf3166a', '82565813-943e-4d1a-ac58-8b4cbc865bdb','2f11714a-9c45-44d3-8cde-cd37eb0c048b', 'Weckpotten', 25);
 
 -- messages
-INSERT INTO "messages" VALUES ('ad9ff799-7727-4193-a34a-09f3819c3479', '9abe4102-6a29-4978-991e-2a30655030e6', '2014-10-12 04:05:06', 'request', 'Oppas bij mij thuis op dinsdag 14/10 van 19u tot 22u30.', 'Ik mag naar een vergadering gaan in Dendermonde. Mijn zoontjes (8 en 6) gaan rond 20u15 slapen, daarna kan je dus doen waar je zin in hebt. TV, internet, een boek lezen...', 15, 'uur');
+INSERT INTO "messages" VALUES ('ad9ff799-7727-4193-a34a-09f3819c3479', '9abe4102-6a29-4978-991e-2a30655030e6', '2014-10-12 04:05:06', 'request', 'Oppas bij mij thuis op dinsdag 14/10 van 19u tot 22u30.', 'Ik mag naar een vergadering gaan in Dendermonde. Mijn zoontjes (8 en 6) gaan rond 20u15 slapen, daarna kan je dus doen waar je zin in hebt. TV, internet, een boek lezen...', 15, 'uur', '8bf649b4-c50a-4ee9-9b02-877aa0a71849');

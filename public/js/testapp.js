@@ -1,5 +1,6 @@
 var app = angular.module('testApp', ['ngRoute']);
 
+var extrapersonguid = generateUUID();
 var extracommunityguid = generateUUID();
 var extramessageguid = generateUUID();
 
@@ -16,13 +17,14 @@ function generateUUID(){
 app.controller('testController', function ($scope, $http) {
     $scope.insertMessage = function() {
         var body = {
-            "person": "/persons/9abe4102-6a29-4978-991e-2a30655030e6",
+            "person": { href : "/persons/9abe4102-6a29-4978-991e-2a30655030e6" },
             "posted": "2014-10-29T02:05:06.000Z",
             "type": "request",
             "title": "Title van de vraag.",
             "description": "Ik vraag ...",
             "amount": 20,
-            "unit": "uur"
+            "unit": "uur",
+            "community": {href: "/communities/" + extracommunityguid}
         };
 
         $http.put("/messages/" + extramessageguid, body);
@@ -30,19 +32,19 @@ app.controller('testController', function ($scope, $http) {
 
     $scope.updateMessage = function() {
         var body = {
-            "person": "/persons/9abe4102-6a29-4978-991e-2a30655030e6",
+            "person": { href: "/persons/9abe4102-6a29-4978-991e-2a30655030e6" },
             "type": "request",
             "title": "Title van de vraag.",
             "description": "Ik vraag ...",
             "amount": 20,
-            "unit": "uur"
+            "unit": "uur",
+            "community": {href: "/communities/" + extracommunityguid}
         };
 
         $http.put("/messages/" + extramessageguid, body);
     };
 
-    $scope.insertGroup = function() {
-
+    $scope.insertCommunity = function() {
         var body = {
             "name": "Test group " + Math.random(),
             "street": "Fabrieksstraat",
@@ -57,7 +59,6 @@ app.controller('testController', function ($scope, $http) {
     };
 
     $scope.insertPerson = function() {
-        var guid = generateUUID();
         var body = {
             "firstname": "John",
             "lastName": "Doe",
@@ -68,8 +69,9 @@ app.controller('testController', function ($scope, $http) {
             "phone": "0492792059",
             "email": "dimitry_dhondt@yahoo.com",
             "balance": 0,
-            "community": "/communities/" + extracommunityguid
+            "community": { href: "/communities/" + extracommunityguid }
         };
 
-        $http.put("/persons/" + guid, body);
-    };});
+        $http.put("/persons/" + extrapersonguid, body);
+    };
+});

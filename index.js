@@ -2,6 +2,8 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var pg = require('pg');
 var bits = require('sqlbits');
+var fs = require("fs");
+
 var app = express();
 
 app.set('port', (process.env.PORT || 5000));
@@ -37,7 +39,8 @@ var config = [
             title: {},
             description: {},
             amount: {},
-            unit: {}
+            unit: {},
+            community: {references: '/communities'}
         }
     },
     {
@@ -81,7 +84,7 @@ var rest2pg_utils = {
             if (mapping.map.hasOwnProperty(key)) {
                 if(mapping.map[key].references) {
                     var referencedType = mapping.map[key].references;
-                    element[key] = typeToConfig[referencedType].type + '/' + row[key];
+                    element[key] = { href: typeToConfig[referencedType].type + '/' + row[key] };
                 } else {
                     element[key] = row[key];
                 }
@@ -97,7 +100,7 @@ var rest2pg_utils = {
                 columnNames.push(key);
             }
         }
-        var sqlColumnNames = '"guid",';
+        var sqlColumnNames = 'guid,';
         for(var j=0; j<columnNames.length; j++) {
             sqlColumnNames += columnNames[j];
             if(j < columnNames.length - 1) {
@@ -128,51 +131,63 @@ function rest2pg(config) {
             console.log(columns);
 
             pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
-                var query = SQL('select ' + columns + ' FROM "' + table + '"');
-
-                // All list resources support orderby, limit and offset.
-                if(req.query.orderby) query.ORDERBY(req.query.orderby);
-                if(req.query.limit) query.LIMIT(req.query.limit);
-                if(req.query.offset) query.OFFSET(req.query.offset);
-
-                client.query(query.sql, query.params, function(err, result) {
-                    // TODO : make implementation streaming, extract count query...
+                var countquery = SQL('select count(*) FROM "' + table + '"');
+                client.query(countquery.sql, countquery.params, function(err, result) {
                     done();
                     if (err) {
                         console.log(err); resp.send("Error " + err);
                         return;
                     }
+                    var count = parseInt(result.rows[0].count);
 
-                    var rows=result.rows;
-                    var results = [];
-                    for(var row=0; row<rows.length; row++) {
-                        var currentrow = rows[row];
+                    var query = SQL('select ' + columns + ' FROM "' + table + '"');
 
-                        var element = {
-                            href: mapping.type + '/' + currentrow.guid
-                        };
+                    // All list resources support orderby, limit and offset.
+                    if(req.query.orderby) query.ORDERBY(req.query.orderby);
+                    if(req.query.limit) query.LIMIT(req.query.limit);
+                    if(req.query.offset) query.OFFSET(req.query.offset);
 
-                        if(req.query.expand !== 'full') {
-                            element.$$expanded = {
-                                $$meta : {
-                                    permalink: mapping.type + '/' + currentrow.guid
-                                }
-                            }
-
-                            rest2pg_utils.mapColumnsToObject(mapping, currentrow, element.$$expanded);
+                    client.query(query.sql, query.params, function(err, result) {
+                        // TODO : make implementation streaming, extract count query...
+                        done();
+                        if (err) {
+                            console.log(err); resp.send("Error " + err);
+                            return;
                         }
 
-                        results.push(element);
-                    }
+                        var rows=result.rows;
+                        var results = [];
+                        for(var row=0; row<rows.length; row++) {
+                            var currentrow = rows[row];
 
-                    var output = {
-                        $$meta: {
-                            count: rows.length
-                        },
-                        results : results
-                    };
-                    resp.send(output);
-                }); // client.query
+                            var element = {
+                                href: mapping.type + '/' + currentrow.guid
+                            };
+
+                            if(req.query.expand !== 'full') {
+                                element.$$expanded = {
+                                    $$meta : {
+                                        permalink: mapping.type + '/' + currentrow.guid
+                                    }
+                                }
+
+                                rest2pg_utils.mapColumnsToObject(mapping, currentrow, element.$$expanded);
+                            }
+
+                            results.push(element);
+                        }
+
+                        var output = {
+                            $$meta: {
+                                count: count
+                            },
+                            results : results
+                        };
+                        // TODO : Implement next link.
+                        //if(req.query.offset + req.query.limit < count) output.$$meta.next = r
+                        resp.send(output);
+                    }); // client.query -- select data
+                }); // client.query - select count(*)
             }); // pg.connect
         }); // app.get - list resource
 
@@ -220,20 +235,24 @@ function rest2pg(config) {
 
             var element = req.body;
 
+            console.log("body");
+            console.log(element);
+
             // check and remove types from references.
             for (var key in mapping.map) {
                 if (mapping.map.hasOwnProperty(key)) {
                     console.log(key);
                     if(mapping.map[key].references) {
+                        var value = element[key].href;
                         var referencedType = mapping.map[key].references;
                         var referencedMapping = typeToConfig[referencedType];
-                        var parts = element[key].split("/");
+                        var parts = value.split("/");
                         var type = '/' + parts[1];
                         var guid = parts[2];
                         if(type === referencedMapping.type) {
                             element[key] = guid;
                         } else {
-                            console.log("Faulty reference detected [" + element[key] +"], detected [" + type + "] expected [" + referencedMapping.type + "]" );
+                            console.log("Faulty reference detected [" + element[key].href +"], detected [" + type + "] expected [" + referencedMapping.type + "]" );
                             return;
                         }
                     }
@@ -308,6 +327,23 @@ function rest2pg(config) {
         });
     }
 }
+
+// Force https in production.
+var forceSecure = function(req, res, next) {
+    isHttps = req.headers['x-forwarded-proto'] == 'https'
+    if ( ! isHttps && req.get('Host').indexOf( 'localhost' ) < 0 && req.get('Host').indexOf( '127.0.0.1' ) < 0 ) {
+        console.log( 'forceSSL req.get = ' + req.get('Host') + ' req.url = ' + req.url )
+        return res.redirect('https://' + req.get('Host') + req.url )
+    }
+    else if ( isHttps )
+        console.log( 'No need to re-direct to HTTPS' )
+    else
+        console.log( 'Served from localhost, not redirecting to HTTPS' )
+
+    next();
+}
+
+app.use( forceSecure );
 
 // Configure REST API.
 rest2pg(config);

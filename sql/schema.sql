@@ -8,19 +8,19 @@ CREATE TABLE "communities" (
   "guid" character varying(36) unique,
   "name" character varying(256) unique,
   "facebook" character varying(256) unique,
-  "street" character varying(256),
-  "streetnumber" character varying(16),
+  "street" character varying(256) not null,
+  "streetnumber" character varying(16) not null,
   "streetbus" character varying(16),
-  "zipcode" character varying(16),
-  "city" character varying(64),
+  "zipcode" character varying(16) not null,
+  "city" character varying(64) not null,
   "phone" character varying(32),
-  "email" character varying(32)
+  "email" character varying(32) not null
 );
 
 CREATE TABLE "persons" (
   "guid" character varying(36) unique,
-  "firstname" character varying(128),
-  "lastname" character varying(128),
+  "firstname" character varying(128) not null,
+  "lastname" character varying(128) not null,
   "street" character varying(256),
   "streetnumber" character varying(16),
   "streetbus" character varying(16),
@@ -28,7 +28,7 @@ CREATE TABLE "persons" (
   "city" character varying(64),
   "phone" character varying(32),
   "email" character varying(32),
-  "balance" integer,
+  "balance" integer not null,
   "community" character varying(36) references "communities"(guid)
 );
 
@@ -37,16 +37,17 @@ CREATE TABLE "transactions" (
   "fromperson" character varying(36) references "persons"(guid),
   "toperson" character varying(36) references "persons"(guid),
   "description" character varying(256),
-  "amount" integer
+  "amount" integer not null
 );
 
 CREATE TABLE "messages" (
   "guid" character varying(36) unique,
   "person" character varying(36) references "persons"(guid),
-  "posted" timestamp,
-  "type" character varying(10),
-  "title" character varying(256),
+  "posted" timestamp not null,
+  "type" character varying(10) not null,
+  "title" character varying(256) not null,
   "description" character varying(1024),
   "amount" integer,
-  "unit" character varying(32)
+  "unit" character varying(32),
+  "community" character varying(36) references "communities"(guid)
 );

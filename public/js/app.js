@@ -18,6 +18,11 @@ app.controller('letsController', function ($scope) {
         para : "..."
     });
     $scope.loggedIn = true;
+
+    var logonForm = {};
+    logonForm.email = 'default@email.com';
+    logonForm.password = 'xyz';
+    $scope.logonForm = logonForm;
 });
 
 app.controller('calendarController', function ($scope, $http) {
@@ -53,6 +58,32 @@ app.controller('facebookController', function ($scope, $http) {
             });
         });
     });
+});
+
+app.controller('elasMessagesController', function ($scope, $http) {
+    $http.get("/messages").success(function(messages) {
+        $http.get("/persons").success(function(persons) {
+            var personPermalinks = {};
+            angular.forEach(persons.results, function(value,key) {
+                var permalink = value.href;
+                var person = value.$$expanded;
+                personPermalinks[permalink] = person;
+            });
+            $scope.messages = messages;
+            $scope.persons = personPermalinks;
+
+            angular.forEach(messages.results, function(message, key) {
+                var permalink = message.$$expanded.person.href;
+                var person = personPermalinks[permalink];
+                message.$$expanded.person.$$expanded = person;
+                console.log(message);
+            });
+        });
+    });
+
+    $scope.personForPermalink = function(permalink) {
+        return $scope.personPermalinks[permalink];
+    };
 });
 
 app.controller('elasController', function ($scope, $http) {
@@ -131,7 +162,7 @@ app.config(['$routeProvider',
             }).
             when('/elas/messages.html', {
                 templateUrl: 'elas/messages.html',
-                controller: 'elasController'
+                controller: 'elasMessagesController'
             }).
             when('/elas/members.html', {
                 templateUrl: 'elas/members.html',
