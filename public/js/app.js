@@ -60,8 +60,21 @@ app.controller('facebookController', function ($scope, $http) {
     });
 });
 
+app.service('elasPersonsService', function($http) {
+    /*$http.get("/persons").success(function(persons) {
+        var personPermalinks = {};
+        angular.forEach(persons.results, function(value,key) {
+            var permalink = value.href;
+            var person = value.$$expanded;
+            personPermalinks[permalink] = person;
+        });
+        this.
+    }*/
+});
+
 app.controller('elasMessagesController', function ($scope, $http) {
     $http.get("/messages").success(function(messages) {
+        // expand persons.
         $http.get("/persons").success(function(persons) {
             var personPermalinks = {};
             angular.forEach(persons.results, function(value,key) {
@@ -70,13 +83,11 @@ app.controller('elasMessagesController', function ($scope, $http) {
                 personPermalinks[permalink] = person;
             });
             $scope.messages = messages;
-            $scope.persons = personPermalinks;
 
             angular.forEach(messages.results, function(message, key) {
                 var permalink = message.$$expanded.person.href;
                 var person = personPermalinks[permalink];
                 message.$$expanded.person.$$expanded = person;
-                console.log(message);
             });
         });
     });
@@ -86,71 +97,41 @@ app.controller('elasMessagesController', function ($scope, $http) {
     };
 });
 
-app.controller('elasController', function ($scope, $http) {
-    var messages = [];
-    messages.push({
-        type : "request",
-        user : "Sabine De Waele",
-        date : "1/10/2014",
-        title : "Oppas bij mij thuis op dinsdag 14/10 van 19u tot 22u30.",
-        description: "Ik mag naar een vergadering gaan in Dendermonde. Mijn zoontjes (8 en 6) gaan rond 20u15 slapen, daarna kan je dus doen waar je zin in hebt. TV, internet, een boek lezen...",
-        price: 15,
-        priceUnit: "uur"
-    })
-    messages.push({
-        type : "request",
-        user : "Nicole De Gols",
-        date : "7/10/2014",
-        title : "Wie gaat er binnenkort naar ikea ?",
-        description: "Wie wil FIXA zelfklevende meubeldoppen meebrengen ? 20 stuks in 1 verpakking. Er mogen 2 verpakkingen meekomen = in totaal 3 euro."
+app.controller('elasMembersController', function($scope, $http) {
+    $http.get("/persons").success(function(persons) {
+        $scope.persons = persons;
     });
-    messages.push({
-        type : "offer",
-        user : "Dimitry D'hondt",
-        date : "7/10/2014",
-        title : "Vegetarische Kooklessen",
-        description: "Ik organiseer, vanuit EVA Dendermonde, een reeks van 6 vegetarische kooklessen. De nadruk ligt op alledaagse, lekkere recepten. Geen moeilijke recepten, en courant beschikbare ingrediënten. Er is beperkt plaats (5 personen). Inschrijven via mail voor 1/11/2014 graag !"
-    });
-    $scope.messages = messages;
+});
 
-    var members = [];
-    members.push({
-        firstName : "Sabine",
-        lastName : "De Waele",
-        street : "Kleinzand",
-        streetNumber : "25",
-        zipCode : 9280,
-        city: "Lebbeke",
-        phone: "0495 54 15 22",
-        email: "sabinedewaele@email.be"
-    });
-    members.push({
-        firstName : "Nicole",
-        lastName : "De Gols",
-        street : "Beekveldstraat",
-        streetNumber : "1A",
-        streetBus: "2",
-        zipCode : 9200,
-        city: "Grembergen",
-        phone: "052 31 82 51",
-        email: "nicoledegols@email.be"
-    });
-    $scope.members = members;
+app.controller('elasTransactionsController', function($scope, $http) {
+    $http.get("/transactions").success(function(transactions) {
+        $http.get("/persons").success(function(persons) {
+            var personPermalinks = {};
+            angular.forEach(persons.results, function(value,key) {
+                var permalink = value.href;
+                var person = value.$$expanded;
+                personPermalinks[permalink] = person;
+            });
 
-    var transactions = [];
-    transactions.push({
-        from: "Sabine De Waele",
-        to: "Nicole De Gols",
-        message: "Prachtige aardperen !",
-        date: "1/9/2014"
+            var permalink;
+            var person;
+            angular.forEach(transactions.results, function(transaction, key) {
+                permalink = transaction.$$expanded.fromperson.href;
+                person = personPermalinks[permalink];
+                transaction.$$expanded.fromperson.$$expanded = person;
+
+                permalink = transaction.$$expanded.toperson.href;
+                person = personPermalinks[permalink];
+                transaction.$$expanded.toperson.$$expanded = person;
+            });
+
+            console.log(transactions);
+            $scope.transactions = transactions;
+        });
     });
-    transactions.push({
-        from: "Sabine De Waele",
-        to: "Erik Paredis",
-        message: "Lezing op het LETS feest",
-        date: "1/10/2014"
-    });
-    $scope.transactions = transactions;
+});
+
+app.controller('elasLoginController', function ($scope, $http) {
 });
 
 app.config(['$routeProvider',
@@ -158,7 +139,7 @@ app.config(['$routeProvider',
         $routeProvider.
             when('/elas/login.html', {
                 templateUrl: 'elas/login.html',
-                controller: 'elasController'
+                controller: 'elasLoginController'
             }).
             when('/elas/messages.html', {
                 templateUrl: 'elas/messages.html',
@@ -166,11 +147,11 @@ app.config(['$routeProvider',
             }).
             when('/elas/members.html', {
                 templateUrl: 'elas/members.html',
-                controller: 'elasController'
+                controller: 'elasMembersController'
             }).
             when('/elas/transactions.html', {
                 templateUrl: 'elas/transactions.html',
-                controller: 'elasController'
+                controller: 'elasTransactionsController'
             }).
             when('/contact.html', {
                 templateUrl: 'contact.html'

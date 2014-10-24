@@ -4,20 +4,20 @@
         <h1>Leden</h1>
     </div>
     <div class="col-md-4 text-right">
-        Zoeken <input width="200" ng-model="membersFilter">
+        Zoeken <input width="200" ng-model="personsFilter">
     </div>
 </div>
 <div class="blog">
     <div class="row">
         <div class="col-md-12">
-            <div class="posts" ng-repeat="member in members | filter:membersFilter">
+            <div class="posts" ng-repeat="person in persons.results | filter:personsFilter">
                 <div class="entry">
-                    <h4>{{member.firstName}} {{member.lastName}}</h4>
+                    <h4>{{person.$$expanded.firstname}} {{person.$$expanded.lastname}}</h4>
                     <p>
-                        {{member.street}} {{member.streetNumber}}<span ng-show="member.streetBus"> bus {{member.streetBus}}</span><br>
-                        {{member.zipCode}} {{member.city}}<br>
-                        <span ng-show="member.phone"> {{member.phone}}</span><br>
-                        <span ng-show="member.email"><a ng-href="mailto:{{member.email}}">{{member.email}}</a><br></span>
+                        {{person.$$expanded.street}} {{person.$$expanded.streetnumber}}<span ng-show="person.$$expanded.streetbus"> bus {{person.$$expanded.streetbus}}</span><br>
+                        {{person.$$expanded.zipcode}} {{person.$$expanded.city}}<br>
+                        <span ng-show="person.$$expanded.phone"> {{person.$$expanded.phone}}</span><br>
+                        <span ng-show="person.$$expanded.email"><a ng-href="mailto:{{person.$$expanded.email}}">{{person.$$expanded.email}}</a><br></span>
                     </p>
                 </div>
             </div>

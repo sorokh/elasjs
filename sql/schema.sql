@@ -29,11 +29,13 @@ CREATE TABLE "persons" (
   "phone" character varying(32),
   "email" character varying(32),
   "balance" integer not null,
+  "password" character varying(64),
   "community" character varying(36) references "communities"(guid)
 );
 
 CREATE TABLE "transactions" (
   "guid" character varying(36) unique,
+  "transactiontimestamp" timestamp not null,
   "fromperson" character varying(36) references "persons"(guid),
   "toperson" character varying(36) references "persons"(guid),
   "description" character varying(256),

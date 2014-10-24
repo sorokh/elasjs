@@ -3,12 +3,25 @@ var bodyParser = require('body-parser');
 var pg = require('pg');
 var bits = require('sqlbits');
 var fs = require("fs");
+var responseTime = require('response-time');
 
 var app = express();
 
 app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.json());
 app.use(express.static(__dirname + '/public/'));
+
+// Time responses on the server-side.
+app.use(responseTime());
+
+app.use(function(req,resp,next) {
+    var start = Date.now();
+    console.log("start " + start);
+    next();
+    var stop = Date.now();
+    console.log("stop " + stop);
+    console.log("Request took " + (stop - start) + " ms.");
+});
 
 var config = [
     {
@@ -59,6 +72,7 @@ var config = [
     {
         type: "/transactions",
         map: {
+            transactiontimestamp: {},
             fromperson: {references: '/persons'},
             toperson: {references: '/persons'},
             description: {},
@@ -189,6 +203,7 @@ function rest2pg(config) {
                     }); // client.query -- select data
                 }); // client.query - select count(*)
             }); // pg.connect
+            console.log("stop GET /{type}");
         }); // app.get - list resource
 
         // register single resource
