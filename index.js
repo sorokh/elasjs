@@ -3,7 +3,6 @@ var bodyParser = require('body-parser');
 var pg = require('pg');
 var bits = require('sqlbits');
 var fs = require("fs");
-var responseTime = require('response-time');
 
 var app = express();
 
