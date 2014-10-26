@@ -10,14 +10,14 @@
 <div class="blog">
     <div class="row">
         <div class="col-md-12">
-            <div class="posts" ng-repeat="person in persons.results | filter:personsFilter">
+            <div class="posts" ng-repeat="person in persons | filter:personsFilter">
                 <div class="entry">
-                    <h4>{{person.$$expanded.firstname}} {{person.$$expanded.lastname}}</h4>
+                    <h4>{{person.firstname}} {{person.lastname}}</h4>
                     <p>
-                        {{person.$$expanded.street}} {{person.$$expanded.streetnumber}}<span ng-show="person.$$expanded.streetbus"> bus {{person.$$expanded.streetbus}}</span><br>
-                        {{person.$$expanded.zipcode}} {{person.$$expanded.city}}<br>
-                        <span ng-show="person.$$expanded.phone"> {{person.$$expanded.phone}}</span><br>
-                        <span ng-show="person.$$expanded.email"><a ng-href="mailto:{{person.$$expanded.email}}">{{person.$$expanded.email}}</a><br></span>
+                        {{person.street}} {{person.streetnumber}}<span ng-show="person.streetbus"> bus {{person.streetbus}}</span><br>
+                        {{person.zipcode}} {{person.city}}<br>
+                        <span ng-show="person.phone"> {{person.phone}}</span><br>
+                        <span ng-show="person.email"><a ng-href="mailto:{{person.email}}">{{person.email}}</a><br></span>
                     </p>
                 </div>
             </div>

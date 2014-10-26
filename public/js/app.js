@@ -63,7 +63,7 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
     .then(function(list) {
         var promises = [];
         angular.forEach(list.results, function(message,key) {
-            promises.push(elasBackend.expandPersonForMessage(message));
+            promises.push(elasBackend.expandPerson(message, 'person'));
         });
         $q.all(promises)
             .then(function(result) {
@@ -72,38 +72,26 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
     });
 });
 
-app.controller('elasMembersController', function($scope, $http) {
-    $http.get("/persons").success(function(persons) {
-        $scope.persons = persons;
+app.controller('elasMembersController', function($scope, $http, $q, elasBackend) {
+    elasBackend.getListResourcePaged("/persons")
+        .then(function(list) {
+        $scope.persons = list.results;
     });
 });
 
-app.controller('elasTransactionsController', function($scope, $http) {
-    $http.get("/transactions").success(function(transactions) {
-        $http.get("/persons").success(function(persons) {
-            var personPermalinks = {};
-            angular.forEach(persons.results, function(value,key) {
-                var permalink = value.href;
-                var person = value.$$expanded;
-                personPermalinks[permalink] = person;
+app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend) {
+    elasBackend.getListResourcePaged('/transactions')
+        .then(function(list) {
+            var promises = [];
+            angular.forEach(list.results, function(transaction,key) {
+                promises.push(elasBackend.expandPerson(transaction, 'fromperson'));
+                promises.push(elasBackend.expandPerson(transaction, 'toperson'));
             });
-
-            var permalink;
-            var person;
-            angular.forEach(transactions.results, function(transaction, key) {
-                permalink = transaction.$$expanded.fromperson.href;
-                person = personPermalinks[permalink];
-                transaction.$$expanded.fromperson.$$expanded = person;
-
-                permalink = transaction.$$expanded.toperson.href;
-                person = personPermalinks[permalink];
-                transaction.$$expanded.toperson.$$expanded = person;
-            });
-
-            console.log(transactions);
-            $scope.transactions = transactions;
+            $q.all(promises)
+                .then(function(result) {
+                    $scope.transactions = list.results;
+                });
         });
-    });
 });
 
 app.controller('elasLoginController', function ($scope, $http) {

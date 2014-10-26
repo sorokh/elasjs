@@ -187,23 +187,23 @@ angular.module('letsApp').factory('elasBackend', ['$http', '$q', '$notification'
         return ret;
     }
 
-    that.expandPersonForMessage = function(message) {
+    that.expandPerson = function(message, key) {
         var defer = $q.defer();
 
         that.getListResource("/persons")
             .then(function(persons) {
                 var hrefToPerson = toArray(persons);
-                var person = hrefToPerson[message.person.href];
+                var person = hrefToPerson[message[key].href];
                 if(!person) {
-                    that.getResource(message.person.href)
+                    that.getResource(message[key].href)
                         .then(function(data) {
-                            message.person.$$expanded = person;
+                            message[key].$$expanded = person;
                             defer.resolve(message);
                         }, function(error) {
                             // TODO
                         });
                 } else {
-                    message.person.$$expanded = person;
+                    message[key].$$expanded = person;
                     defer.resolve(message);
                 }
             });

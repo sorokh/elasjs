@@ -9,18 +9,18 @@
 </div>
 <div class="blog">
     <div class="row">
-        <div class="posts" ng-repeat="transaction in transactions.results | filter:transactionsFilter">
+        <div class="posts" ng-repeat="transaction in transactions | filter:transactionsFilter">
             <div class="col-md-2">
-                <i class="fa fa-calendar"></i> <strong>{{transaction.$$expanded.transactiontimestamp | date:'dd-MM-yyyy'}}</strong>
+                <i class="fa fa-calendar"></i> <strong>{{transaction.transactiontimestamp | date:'dd-MM-yyyy'}}</strong>
             </div>
             <div class="col-md-4">
-                {{transaction.$$expanded.fromperson.$$expanded.firstname}} {{transaction.$$expanded.fromperson.$$expanded.lastname}} aan {{transaction.$$expanded.toperson.$$expanded.firstname}} {{transaction.$$expanded.toperson.$$expanded.lastname}}
+                {{transaction.fromperson.$$expanded.firstname}} {{transaction.fromperson.$$expanded.lastname}} aan {{transaction.toperson.$$expanded.firstname}} {{transaction.toperson.$$expanded.lastname}}
             </div>
             <div class="col-md-4 text-right">
-                {{transaction.$$expanded.description}}
+                {{transaction.description}}
             </div>
             <div class="col-md-2 text-right">
-                {{transaction.$$expanded.amount}}
+                {{transaction.amount}}
             </div>
         </div>
         <div class="col-md-12">
