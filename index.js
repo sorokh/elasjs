@@ -12,6 +12,7 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname + '/public/'));
 
 // Time responses on the server-side.
+/*
 app.use(responseTime());
 
 app.use(function(req,resp,next) {
@@ -22,6 +23,7 @@ app.use(function(req,resp,next) {
     console.log("stop " + stop);
     console.log("Request took " + (stop - start) + " ms.");
 });
+*/
 
 var config = [
     {
@@ -140,9 +142,9 @@ function rest2pg(config) {
             var mapping = typeToConfig[type];
             var columns = rest2pg_utils.sqlColumnNames(mapping);
             var table = mapping.type.split("/")[1];
-            console.log("list request for " + mapping.type);
 
-            console.log(columns);
+            var start = Date.now();
+            console.log("GET " + mapping.type);
 
             pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
                 var countquery = SQL('select count(*) FROM "' + table + '"');
@@ -166,6 +168,8 @@ function rest2pg(config) {
                         done();
                         if (err) {
                             console.log(err); resp.send("Error " + err);
+                            var stop = Date.now();
+                            console.log("Request took " + (stop - start) + " ms.");
                             return;
                         }
 
@@ -200,10 +204,12 @@ function rest2pg(config) {
                         // TODO : Implement next link.
                         //if(req.query.offset + req.query.limit < count) output.$$meta.next = r
                         resp.send(output);
+
+                        var stop = Date.now();
+                        console.log("Request took " + (stop - start) + " ms.");
                     }); // client.query -- select data
                 }); // client.query - select count(*)
             }); // pg.connect
-            console.log("stop GET /{type}");
         }); // app.get - list resource
 
         // register single resource
@@ -214,7 +220,8 @@ function rest2pg(config) {
             var table = mapping.type.split("/")[1];
             var columns = rest2pg_utils.sqlColumnNames(mapping);
 
-            console.log("simple resource request for guid " + req.params.guid + " on type " + mapping.type);
+            var start = Date.now();
+            console.log("GET " + mapping.type + "/" + req.params.guid);
 
             pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
                 var query = SQL('select ' + columns + ' FROM "' + table + '"');
@@ -224,6 +231,8 @@ function rest2pg(config) {
                     done();
                     if (err) {
                         console.log(err); resp.send("Error " + err);
+                        var stop = Date.now();
+                        console.log("Request took " + (stop - start) + " ms.");
                         return;
                     }
 
@@ -237,6 +246,9 @@ function rest2pg(config) {
                     rest2pg_utils.mapColumnsToObject(mapping, row, output);
 
                     resp.send(output);
+
+                    var stop = Date.now();
+                    console.log("Request took " + (stop - start) + " ms.");
                 });
             });
         });
@@ -250,13 +262,13 @@ function rest2pg(config) {
 
             var element = req.body;
 
-            console.log("body");
+            var start = Date.now();
+            console.log("PUT " + mapping.type + "/" + req.params.guid);
             console.log(element);
 
             // check and remove types from references.
             for (var key in mapping.map) {
                 if (mapping.map.hasOwnProperty(key)) {
-                    console.log(key);
                     if(mapping.map[key].references) {
                         var value = element[key].href;
                         var referencedType = mapping.map[key].references;
@@ -295,7 +307,6 @@ function rest2pg(config) {
                             }
                         }
 
-                        console.log("updating resource " + req.route.path);
                         console.log(element);
 
                         var update =
@@ -307,8 +318,12 @@ function rest2pg(config) {
                             done();
                             if (err) {
                                 console.log(err); resp.send("Error " + err);
+                                var stop = Date.now();
+                                console.log("Request took " + (stop - start) + " ms.");
                                 return;
                             }
+                            var stop = Date.now();
+                            console.log("Request took " + (stop - start) + " ms.");
                         });
                     } else {
                         element.guid = req.params.guid;
@@ -325,16 +340,16 @@ function rest2pg(config) {
                         var insert =
                             bits.INSERT.INTO(table,element);
 
-                        console.log("inserting resource " + req.route.path);
-                        console.log(element);
-                        console.log(insert.sql);
-                        console.log(insert.params);
                         client.query(insert.sql,insert.params, function(err, result) {
                             done();
                             if (err) {
                                 console.log(err); resp.send("Error " + err);
+                                var stop = Date.now();
+                                console.log("Request took " + (stop - start) + " ms.");
                                 return;
                             }
+                            var stop = Date.now();
+                            console.log("Request took " + (stop - start) + " ms.");
                         });
                     }
                 });

@@ -10,21 +10,22 @@
 <div class="blog">
     <div class="row">
         <div class="col-md-12">
-            <div class="posts" ng-repeat="message in messages.results | filter:messagesFilter">
+            <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
                 <div class="entry">
+
                     <div class="meta">
-                        <i class="fa fa-calendar"></i> {{message.$$expanded.posted}} <i class="fa fa-user"></i> {{message.$$expanded.person.$$expanded.firstname}} {{message.$$expanded.person.$$expanded.lastname}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
+                        <i class="fa fa-calendar"></i> {{message.posted}} <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
                     </div>
 
                     <h4>
-                        <span ng-show="message.$$expanded.type == 'offer'">(Aanbod) </span>
-                        <span ng-show="message.$$expanded.type == 'request'">(Vraag) </span>
-                        {{message.$$expanded.title}}
+                        <span ng-show="message.type == 'offer'">(Aanbod) </span>
+                        <span ng-show="message.type == 'request'">(Vraag) </span>
+                        {{message.title}}
                     </h4>
                     <p>
-                        {{message.$$expanded.description}}<br>
-                        <span ng-show="message.$$expanded.amount && message.$$expanded.unit">{{message.$$expanded.amount}} duimkes per {{message.$$expanded.unit}}</span>
-                        <span ng-hide="message.$$expanded.amount && message.$$expanded.unit">Er werd geen vraagprijs ingegeven.</span>
+                        {{message.description}}<br>
+                        <span ng-show="message.amount && message.unit">{{message.amount}} duimkes per {{message.unit}}</span>
+                        <span ng-hide="message.amount && message.unit">Er werd geen vraagprijs ingegeven.</span>
                         <br>
                         <a href="">Toon alle details...</a>
                     </p>

@@ -1,4 +1,4 @@
-var app = angular.module('letsApp', ['ngRoute','angular-flexslider']);
+var app = angular.module('letsApp', ['ngRoute','angular-flexslider', 'notifications']);
 
 app.controller('letsController', function ($scope) {
     $scope.flexSlides = [];
@@ -20,8 +20,6 @@ app.controller('letsController', function ($scope) {
     $scope.loggedIn = true;
 
     var logonForm = {};
-    logonForm.email = 'default@email.com';
-    logonForm.password = 'xyz';
     $scope.logonForm = logonForm;
 });
 
@@ -60,41 +58,18 @@ app.controller('facebookController', function ($scope, $http) {
     });
 });
 
-app.service('elasPersonsService', function($http) {
-    /*$http.get("/persons").success(function(persons) {
-        var personPermalinks = {};
-        angular.forEach(persons.results, function(value,key) {
-            var permalink = value.href;
-            var person = value.$$expanded;
-            personPermalinks[permalink] = person;
+app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend) {
+    elasBackend.getListResourcePaged('/messages')
+    .then(function(list) {
+        var promises = [];
+        angular.forEach(list.results, function(message,key) {
+            promises.push(elasBackend.expandPersonForMessage(message));
         });
-        this.
-    }*/
-});
-
-app.controller('elasMessagesController', function ($scope, $http) {
-    $http.get("/messages").success(function(messages) {
-        // expand persons.
-        $http.get("/persons").success(function(persons) {
-            var personPermalinks = {};
-            angular.forEach(persons.results, function(value,key) {
-                var permalink = value.href;
-                var person = value.$$expanded;
-                personPermalinks[permalink] = person;
+        $q.all(promises)
+            .then(function(result) {
+                $scope.messages = result;
             });
-            $scope.messages = messages;
-
-            angular.forEach(messages.results, function(message, key) {
-                var permalink = message.$$expanded.person.href;
-                var person = personPermalinks[permalink];
-                message.$$expanded.person.$$expanded = person;
-            });
-        });
     });
-
-    $scope.personForPermalink = function(permalink) {
-        return $scope.personPermalinks[permalink];
-    };
 });
 
 app.controller('elasMembersController', function($scope, $http) {
