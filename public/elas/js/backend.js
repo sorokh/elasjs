@@ -1,4 +1,4 @@
-angular.module('letsApp').factory('elasBackend', ['$http', '$q', '$notification', function($http, $q, $notification) {
+angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification', function($http, $q, $notification) {
     var that = {};
 
     var generateGUID = function(){

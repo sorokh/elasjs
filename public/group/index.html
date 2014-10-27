@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="letsApp" ng-controller="letsController" >
+<html lang="en" ng-app="groupApp" ng-controller="groupController" >
 <head>
     <meta charset="utf-8">
     <!-- Title here -->
-    <title>LETS Vlaanderen</title>
+    <title>LETS Dendermonde</title>
     <!-- Description, Keywords and Author -->
     <meta name="description" content="Your description">
     <meta name="keywords" content="Your,Keywords">
@@ -12,12 +12,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Styles -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/flexslider.css" rel="stylesheet">
-    <link href="css/prettyPhoto.css" rel="stylesheet">
-    <link href="css/font-awesome.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/blue.css" rel="stylesheet">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/flexslider.css" rel="stylesheet">
+    <link href="/css/prettyPhoto.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/lets-3.css" rel="stylesheet">
 
     <style>
         [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
@@ -35,13 +35,13 @@
     <div class="container">
         <div class="row">
             <div class="col-md-4 col-sm-4">
-                <a href="index.html"><img src="img/logo_letsvlaanderen.png" class="img-responsive"></a>
+                <a href="/"><img src="/img/LV_bollen_horizontaal.png" class="img-responsive"></a>
             </div>
             <div class="col-md-8 col-sm-8">
                 <div class="list">
                     <!-- Add your email id here -->
                     <div class="email">
-                        <i class="fa fa-envelope-o"></i> Email: <a href="mailto:info@letsvlaanderen.be">info@letsvlaanderen.be</a>
+                        <i class="fa fa-envelope-o"></i> Email: <a href="mailto:letsdendermonde@gmail.com">letsdendermonde@gmail.com</a>
                     </div>
                 </div>
             </div>
@@ -74,10 +74,7 @@
                 <li><a href="#">Home </a></li>
                 <li><a href="#/calendar.html">Agenda </a></li>
                 <li><a href="#/contact.html">Contact </a></li>
-                <li><a href="#/elas/login.html">Elas<sup>3</sup> </a></li>
-                <li ng-show="loggedIn"><a href="#/elas/messages.html">Vraag & Aanbod </a></li>
-                <li ng-show="loggedIn"><a href="#/elas/members.html">Leden </a></li>
-                <li ng-show="loggedIn"><a href="#/elas/transactions.html">Transacties </a></li>
+                <li><a href="/elas">Elas-NG </a></li>
                 <!--
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown">Contact <b class="caret"></b></a>
@@ -108,10 +105,10 @@
             <div class="col-md-12">
                 <!-- Widget 1 -->
                 <div class="widget">
-                    <h4>Over LETS Vlaanderen</h4>
+                    <h4>Over LETS Dendermonde</h4>
 
                     <p>
-                        LETS Vlaanderen vzw is het steunpunt van en voor LETS-groepen én een exerpertisenetwerk van complementaire munten waar LETS een 'good practice' van is.
+                        LETS Dendermonde ...
                     </p>
                     <!-- Social Media -->
                     <p>
@@ -122,7 +119,7 @@
         </div>
         <div class="row">
             <div class="col-md-12"><p class="copy pull-left">
-                Copyright &copy; <a href="#">LETS Vlaanderen</a></p></div>
+                Copyright &copy; <a href="#">LETS Dendermonde</a></p></div>
         </div>
     </div>
 </footer>
@@ -152,31 +149,15 @@
 <script src="js/angular-route.js"></script>
 -->
 
-<script src="../bower_components/jquery/jquery.min.js"></script>
-<script src="../bower_components/jquery-ui/ui/minified/jquery-ui.min.js"></script>
-<script src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-<script src="../bower_components/flexslider/jquery.flexslider-min.js"></script>
-<script src="../bower_components/angular/angular.min.js"></script>
-<script src="../bower_components/angular-route/angular-route.min.js"></script>
-<script src="../bower_components/angular-flexslider/angular-flexslider.js"></script>
-<script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
-<script src="js/app.js"></script>
-<script src="elas/notification.js"></script>
-<script src="elas/backend.js"></script>
+<script src="/bower_components/jquery/jquery.min.js"></script>
+<script src="/bower_components/jquery-ui/ui/minified/jquery-ui.min.js"></script>
+<script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="/bower_components/flexslider/jquery.flexslider-min.js"></script>
+<script src="/bower_components/angular/angular.min.js"></script>
+<script src="/bower_components/angular-route/angular-route.min.js"></script>
+<script src="/bower_components/angular-flexslider/angular-flexslider.js"></script>
+<script src="/bower_components/moment/min/moment-with-locales.min.js"></script>
+<script src="js/letsgroups.js"></script>
 
-<!--
-<script>
-    /* Flex Slider */
-
-    $(window).load(function () {
-        $('.flexslider').flexslider({
-            animation: "slide",
-            controlNav: true,
-            pauseOnHover: true,
-            slideshowSpeed: 15000
-        });
-    });
-</script>
--->
 </body>
 </html>

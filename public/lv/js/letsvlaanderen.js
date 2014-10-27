@@ -1,19 +1,19 @@
-var app = angular.module('letsApp', ['ngRoute','angular-flexslider', 'notifications']);
+var app = angular.module('letsApp', ['ngRoute','angular-flexslider']);
 
 app.controller('letsController', function ($scope) {
     $scope.flexSlides = [];
     $scope.flexSlides.push({
-        image : "img/photos/1.jpg",
+        image : "/img/photos/1.jpg",
         title : "Gemeenschapsmunt",
         para : "Korte beschrijving..."
     });
     $scope.flexSlides.push({
-        image : "img/photos/2.jpg",
+        image : "/img/photos/2.jpg",
         title : "Informatie",
         para : "Even kort toelichten..."
     });
     $scope.flexSlides.push({
-        image : "img/photos/3.jpg",
+        image : "/img/photos/3.jpg",
         title : "Titel",
         para : "..."
     });
@@ -58,64 +58,9 @@ app.controller('facebookController', function ($scope, $http) {
     });
 });
 
-app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged('/messages')
-    .then(function(list) {
-        var promises = [];
-        angular.forEach(list.results, function(message,key) {
-            promises.push(elasBackend.expandPerson(message, 'person'));
-        });
-        $q.all(promises)
-            .then(function(result) {
-                $scope.messages = result;
-            });
-    });
-});
-
-app.controller('elasMembersController', function($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged("/persons")
-        .then(function(list) {
-        $scope.persons = list.results;
-    });
-});
-
-app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged('/transactions')
-        .then(function(list) {
-            var promises = [];
-            angular.forEach(list.results, function(transaction,key) {
-                promises.push(elasBackend.expandPerson(transaction, 'fromperson'));
-                promises.push(elasBackend.expandPerson(transaction, 'toperson'));
-            });
-            $q.all(promises)
-                .then(function(result) {
-                    $scope.transactions = list.results;
-                });
-        });
-});
-
-app.controller('elasLoginController', function ($scope, $http) {
-});
-
 app.config(['$routeProvider',
     function($routeProvider) {
         $routeProvider.
-            when('/elas/login.html', {
-                templateUrl: 'elas/login.html',
-                controller: 'elasLoginController'
-            }).
-            when('/elas/messages.html', {
-                templateUrl: 'elas/messages.html',
-                controller: 'elasMessagesController'
-            }).
-            when('/elas/members.html', {
-                templateUrl: 'elas/members.html',
-                controller: 'elasMembersController'
-            }).
-            when('/elas/transactions.html', {
-                templateUrl: 'elas/transactions.html',
-                controller: 'elasTransactionsController'
-            }).
             when('/contact.html', {
                 templateUrl: 'contact.html'
             }).

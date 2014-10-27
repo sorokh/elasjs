@@ -1,0 +1,229 @@
+/* Green Color CSS */
+
+body{
+border-top:3px solid #811954;
+}
+
+.color{
+color:#811954;
+}
+
+a, a:visited{
+color:#811954;
+}
+
+a:hover{
+color:#691444;
+}
+
+.navbar{
+background: #811954 !important;
+border-top:1px solid #691444 !important;
+border-bottom:1px solid #691444 !important; 
+}
+
+.nav .open>a, .nav .open>a:hover, .nav .open>a:focus {
+   border-color: #691444;
+}
+
+.navbar button{
+background:#691444 !important;  
+}
+
+.navbar button:hover{
+background:#691444 !important;
+}
+
+.navbar .nav{
+border-right:1px solid #691444;
+}
+
+.navbar .nav > li > a{
+background: #811954; 
+border-left:1px solid #691444;
+}
+
+.navbar .nav > li > a:hover{
+background:#691444 !important;
+}
+
+.navbar .nav .active > a,
+.navbar .nav .active > a:hover,
+.navbar .nav .active > a:focus {
+background: #691444 !important;
+}
+
+.dropdown-toggle{
+background: #811954 !important;
+}
+
+
+.dropdown-menu{
+background:#811954 !important;
+border:1px solid #691444;
+}
+
+.dropdown-menu a{
+background:#811954 !important;
+border-bottom:1px solid #691444;
+}
+
+.dropdown-menu a:hover,.dropdown-menu a:focus{
+background:#691444 !important;
+}
+
+.social i{
+background:#811954;
+}
+
+.social i:hover{
+background:#691444;
+}
+
+.flex-caption{
+border-left:4px solid #811954;
+}
+
+.service i{
+color:#811954;
+}
+
+/* Timeline */
+
+.time .tidate{
+background:#811954;
+}
+
+.time .timatter{
+border-bottom:2px solid #811954;
+}
+
+/* Events - Accordion*/
+
+.events .panel-heading h5{
+background:#811954;
+}
+
+/* Slider */
+
+.da-slider{
+border-top: 4px solid #811954;
+border-bottom: 4px solid #811954;
+}
+
+.da-slide h2{
+color:#811954;
+}
+
+.da-slide .da-link{
+background:#811954;
+}
+
+/* Testimonial */
+
+.test{
+border-bottom:2px solid #811954;
+}
+
+.test-arrow{
+border-top-color: #811954;
+}
+
+/* Feature alt */
+
+.afeature:hover{
+border:5px solid #811954;
+}
+
+.afmatter i{
+color:#811954;
+}
+
+.rpost1:hover,.rpost2:hover{
+border-bottom:2px solid #811954;
+}
+
+.panel-heading i{
+color:#811954;
+}
+
+.process i{
+color:#811954;
+}
+
+.process-meta span{
+background:#811954;
+}
+
+.feat h4 i{
+color:#811954;
+}
+
+.blog .meta i{
+color:#811954;
+}
+
+.posts .tags a{
+background:#811954;
+border:1px solid #691444;
+border-bottom:3px solid #691444;
+}
+
+.posts .tags a:hover{
+border-bottom:3px solid #811954;
+background:#691444;
+border:1px solid #691444;
+}
+
+.paging a:hover{
+background: #811954;
+border:1px solid #691444;
+}
+
+.paging .current{
+background: #811954;
+border:1px solid #691444;
+}
+
+.serv .simg i{
+color:#811954;
+}
+
+.button a, .button a:visited{
+background:#811954;
+border-bottom:2px solid #691444;
+}
+
+.button a:hover{
+background:#691444;
+}
+
+.pricel .phead-top{
+background:#811954;
+border:1px solid #691444;
+}
+
+.pricel .phead-bottom{
+border-top:1px solid #691444;
+}
+
+.nav-tabs > li > a:hover{
+background:#811954;
+}
+
+.about .asocial i{
+background:#811954;
+}
+
+.resume h4{
+background:#811954;
+}
+
+.resume h5{
+color:#811954;
+}
+.content ul li i { color:#811954;}
+footer ul li i { color:#811954;}
+footer{
+border-top:3px solid #811954;
+}
