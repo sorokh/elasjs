@@ -1,0 +1,11 @@
+#!/bin/bash
+rm -rf public/bowerjs
+mkdir public/bowerjs
+cp bower_components/jquery/jquery.min.js public/bowerjs
+cp bower_components/jquery-ui/ui/minified/jquery-ui.min.js public/bowerjs
+cp bower_components/bootstrap/dist/js/bootstrap.min.js public/bowerjs
+cp bower_components/flexslider/jquery.flexslider-min.js public/bowerjs
+cp bower_components/angular/angular.min.js public/bowerjs
+cp bower_components/angular-route/angular-route.min.js public/bowerjs
+cp bower_components/angular-flexslider/angular-flexslider.js public/bowerjs
+cp bower_components/moment/min/moment-with-locales.min.js public/bowerjs

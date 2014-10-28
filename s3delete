@@ -1,0 +1,4 @@
+#!/bin/bash
+s3cmd del --force -r s3://evadendermonde
+s3cmd rb --bucket-location=EU s3://evadendermonde
+s3cmd mb --bucket-location=EU s3://evadendermonde
