@@ -8,21 +8,31 @@ var app = express();
 
 app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.json());
+
 app.use(express.static(__dirname + '/public/'));
 
-// Time responses on the server-side.
-/*
-app.use(responseTime());
+// Force https in production.
+var forceSecure = function(req, res, next) {
+    isHttps = req.headers['x-forwarded-proto'] == 'https'
+    if ( ! isHttps && req.get('Host').indexOf( 'localhost' ) < 0 && req.get('Host').indexOf( '127.0.0.1' ) < 0 ) {
+        return res.redirect('https://' + req.get('Host') + req.url )
+    }
 
-app.use(function(req,resp,next) {
-    var start = Date.now();
-    console.log("start " + start);
     next();
-    var stop = Date.now();
-    console.log("stop " + stop);
-    console.log("Request took " + (stop - start) + " ms.");
-});
-*/
+}
+
+app.use( forceSecure );
+
+var filterOnCommunities = function(value, select) {
+    if(value) {
+        var guid = value.substr(13);
+        if(guid.length == 36) {
+            select.WHERE('"community" = ', bits.$(guid));
+        } else {
+            console.log("ignoring parameter [communities] - syntax error. ["+ value + "]");
+        }
+    }
+};
 
 var config = [
     {
@@ -39,6 +49,9 @@ var config = [
             email: {},
             balance: {},
             community: {references: '/communities'}
+        },
+        query: {
+            communities: filterOnCommunities
         }
     },
     {
@@ -55,6 +68,9 @@ var config = [
             amount: {},
             unit: {},
             community: {references: '/communities'}
+        },
+        query: {
+            communities: filterOnCommunities
         }
     },
     {
@@ -124,6 +140,23 @@ var rest2pg_utils = {
         }
 
         return sqlColumnNames;
+    },
+
+    // apply extra parameters on request URL to select.
+    applyRequestParameters: function(mapping, req, select) {
+        var urlparameters = req.query;
+
+        if(mapping.query) {
+            for (var key in urlparameters) {
+                if (urlparameters.hasOwnProperty(key)) {
+                    if(mapping.query[key]) {
+                        mapping.query[key](urlparameters[key], select);
+                    } else {
+                        console.log("Unknown query parameter [" + key + "]. Ignoring..");
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -147,6 +180,10 @@ function rest2pg(config) {
 
             pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
                 var countquery = SQL('select count(*) FROM "' + table + '"');
+
+                // Apply request parameters.
+                rest2pg_utils.applyRequestParameters(mapping, req, countquery);
+
                 client.query(countquery.sql, countquery.params, function(err, result) {
                     done();
                     if (err) {
@@ -156,6 +193,9 @@ function rest2pg(config) {
                     var count = parseInt(result.rows[0].count);
 
                     var query = SQL('select ' + columns + ' FROM "' + table + '"');
+
+                    // Apply request parameters.
+                    rest2pg_utils.applyRequestParameters(mapping, req, query);
 
                     // All list resources support orderby, limit and offset.
                     if(req.query.orderby) query.ORDERBY(req.query.orderby);
@@ -356,26 +396,128 @@ function rest2pg(config) {
         });
     }
 }
-
-// Force https in production.
-var forceSecure = function(req, res, next) {
-    isHttps = req.headers['x-forwarded-proto'] == 'https'
-    if ( ! isHttps && req.get('Host').indexOf( 'localhost' ) < 0 && req.get('Host').indexOf( '127.0.0.1' ) < 0 ) {
-        console.log( 'forceSSL req.get = ' + req.get('Host') + ' req.url = ' + req.url )
-        return res.redirect('https://' + req.get('Host') + req.url )
-    }
-    else if ( isHttps )
-        console.log( 'No need to re-direct to HTTPS' )
-    else
-        console.log( 'Served from localhost, not redirecting to HTTPS' )
-
-    next();
-}
-
-app.use( forceSecure );
-
 // Configure REST API.
 rest2pg(config);
+
+app.get('/generatetestdata', function(req,resp) {
+/*    var max_communities = 2;
+    var max_persons = 2;
+    var max_messages = 2;*/
+    var max_communities = 40;
+    var max_persons = 70;
+    var max_messages = 2;
+
+    var generateUUID = function() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = (d + Math.random()*16)%16 | 0;
+            d = Math.floor(d/16);
+            return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+        });
+        return uuid;
+    };
+
+    var communities = [];
+    for(var community=0; community<max_communities; community++) {
+        var communityuuid = generateUUID();
+        var currentcommunity = {
+            "guid": communityuuid,
+            "name": "Community " + Math.random(),
+            "facebook": "https://www.facebook.com/pages/LETS-Regio-Dendermonde/113915938675095?ref=ts&fref=ts" + Math.random(),
+            "street": "Fabrieksstraat",
+            "streetNumber": "31",
+            "streetBus" : "1a",
+            "zipcode": "9280",
+            "city": "Lebbeke",
+            "phone": "0492792059",
+            "email": "dimitry_dhondt@yahoo.com"
+        };
+        communities.push(currentcommunity);
+    }
+
+    var persons = [];
+    for(var community=0; community<communities.length; community++) {
+        var currentcommunity = communities[community];
+        var communityuuid = currentcommunity.guid;
+
+        for(var person=0; person<max_persons; person++) {
+            var personuuid = generateUUID();
+            var currentperson = {
+                "guid": personuuid,
+                "firstname": "John " + Math.random(),
+                "lastName": "Doe",
+                "street": "Fabrieksstraat",
+                "streetNumber": "31",
+                "streetBus": "1a",
+                "zipcode": "9280",
+                "city": "Lebbeke",
+                "phone": "0492792059",
+                "email": "dimitry_dhondt@yahoo.com",
+                "balance": 0,
+                "community": communityuuid
+            };
+            persons.push(currentperson);
+        }
+    }
+
+    var messages = [];
+    for(var person=0; person<persons.length; person++) {
+        var currentperson = persons[person];
+        var personuuid = currentperson.guid;
+
+        for(var message=0; message<max_messages; message++) {
+            var messageguid = generateUUID();
+            var currentmessage = {
+                "guid": messageguid,
+                "person": personuuid,
+                "posted": "2014-10-29T02:05:06.000Z",
+                "type": "request",
+                "title": "Title van de vraag.",
+                "description": "Ik vraag ..." + Math.random(),
+                "amount": 20,
+                "unit": "uur",
+                "community": communityuuid
+            };
+            messages.push(currentmessage);
+        }
+    }
+
+    console.log("communities " + communities.length);
+    console.log("persons " + persons.length);
+    console.log("messages " + messages.length);
+
+    var object2sql = function(table, object) {
+        var insert = 'INSERT INTO ' + table + ' VALUES (';
+        var first = true;
+        for (var key in object) {
+            if (object.hasOwnProperty(key)) {
+                if(!first) insert += ",";
+                insert += "'" + object[key] + "'";
+                first = false;
+            }
+        }
+        insert += ');\n';
+
+        return insert;
+    };
+
+    var stream = fs.createWriteStream("/tmp/insert.sql");
+    stream.once('open', function(fd) {
+        for(var i=0; i<communities.length; i++) {
+            var insert = object2sql("communities", communities[i]);
+            stream.write(insert);
+        }
+        for(var i=0; i<persons.length; i++) {
+            var insert = object2sql("persons", persons[i]);
+            stream.write(insert);
+        }
+        for(var i=0; i<messages.length; i++) {
+            var insert = object2sql("messages", messages[i]);
+            stream.write(insert);
+        }
+        stream.end();
+    });
+});
 
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'))

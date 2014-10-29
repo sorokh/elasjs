@@ -187,10 +187,10 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         return ret;
     }
 
-    that.expandPerson = function(message, key) {
+    that.expandPerson = function(message, key, initurl) {
         var defer = $q.defer();
 
-        that.getListResource("/persons")
+        that.getListResource(initurl)
             .then(function(persons) {
                 var hrefToPerson = toArray(persons);
                 var person = hrefToPerson[message[key].href];

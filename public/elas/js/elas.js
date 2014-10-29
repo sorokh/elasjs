@@ -1,5 +1,7 @@
 var app = angular.module('elasApp', ['ngRoute','angular-flexslider', 'notifications']);
 
+var initPersonsUrl = "/persons?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849";
+
 app.controller('elasController', function ($scope) {
     $scope.flexSlides = [];
     $scope.flexSlides.push({
@@ -24,11 +26,11 @@ app.controller('elasController', function ($scope) {
 });
 
 app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged('/messages')
+    elasBackend.getListResourcePaged('/messages?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849')
     .then(function(list) {
         var promises = [];
         angular.forEach(list.results, function(message,key) {
-            promises.push(elasBackend.expandPerson(message, 'person'));
+            promises.push(elasBackend.expandPerson(message, 'person', initPersonsUrl));
         });
         $q.all(promises)
             .then(function(result) {
@@ -38,19 +40,19 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
 });
 
 app.controller('elasMembersController', function($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged("/persons")
+    elasBackend.getListResourcePaged("/persons?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849")
         .then(function(list) {
         $scope.persons = list.results;
     });
 });
 
 app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged('/transactions')
+    elasBackend.getListResourcePaged('/transactions?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849&limit=100')
         .then(function(list) {
             var promises = [];
             angular.forEach(list.results, function(transaction,key) {
-                promises.push(elasBackend.expandPerson(transaction, 'fromperson'));
-                promises.push(elasBackend.expandPerson(transaction, 'toperson'));
+                promises.push(elasBackend.expandPerson(transaction, 'fromperson', initPersonsUrl));
+                promises.push(elasBackend.expandPerson(transaction, 'toperson', initPersonsUrl));
             });
             $q.all(promises)
                 .then(function(result) {
