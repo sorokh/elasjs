@@ -1,6 +1,6 @@
 var app = angular.module('letsApp', ['ngRoute','angular-flexslider']);
 
-app.controller('letsController', function ($scope) {
+app.controller('letsController', function ($scope, $location, $anchorScroll) {
     $scope.flexSlides = [];
     $scope.flexSlides.push({
         image : "/img/photos/1.jpg",
@@ -17,10 +17,11 @@ app.controller('letsController', function ($scope) {
         title : "Titel",
         para : "..."
     });
-    $scope.loggedIn = true;
 
-    var logonForm = {};
-    $scope.logonForm = logonForm;
+    $scope.scrollTo = function(id) {
+        $location.hash(id);
+        $anchorScroll();
+    }
 });
 
 app.controller('calendarController', function ($scope, $http) {
@@ -67,6 +68,12 @@ app.config(['$routeProvider',
             when('/calendar.html', {
                 templateUrl: 'calendar.html',
                 controller: 'calendarController'
+            }).
+            when('/about.html', {
+                templateUrl: 'about.html'
+            }).
+            when('/groepen.html', {
+                templateUrl: 'groepen.html'
             }).
             when('/', {
                 templateUrl: 'root.html',
