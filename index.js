@@ -9,8 +9,6 @@ var app = express();
 app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.json());
 
-app.use(express.static(__dirname + '/public/'));
-
 var cl = function(x) {
     console.log(x);
 }
@@ -25,6 +23,8 @@ var forceSecure = function(req, res, next) {
     next();
 };
 app.use(forceSecure);
+
+app.use(express.static(__dirname + '/public/'));
 
 var knownPasswords = {};
 
