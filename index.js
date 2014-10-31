@@ -46,7 +46,6 @@ var checkBasicAuthentication = function(req, res, next) {
             var password = decoded.substr(firstColonIndex + 1);
 
             if(email && password && email.length > 0 && password.length > 0) {
-                cl(knownPasswords);
                 if(knownPasswords[email]) {
                     if(knownPasswords[email] === password) {
                         cl("cached password pass");
