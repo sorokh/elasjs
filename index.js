@@ -85,16 +85,35 @@ var checkBasicAuthentication = function(req, res, next) {
         cl("No Authorization header detected.");
         forbidden();
     }
-
 };
 
 var filterOnCommunities = function(value, select) {
+    var syntax = function() {
+        console.log("ignoring parameter [communities] - syntax error. ["+ value + "]");
+    }
+
     if(value) {
-        var guid = value.substr(13);
+        var permalinks = value.split(",");
+        var guids = [];
+        for(var i=0; i<permalinks.length; i++) {
+            if(permalinks[i].indexOf("/communities/") == 0) {
+                var guid = permalinks[i].substr(13);
+                if(guid.length == 36) {
+                    guids.push(guid);
+                } else {
+                    syntax();
+                    return;
+                }
+            } else {
+                syntax();
+                return;
+            }
+        }
         if(guid.length == 36) {
-            select.WHERE('"community" = ', bits.$(guid));
+            select.WHERE('community').IN(guids);
         } else {
-            console.log("ignoring parameter [communities] - syntax error. ["+ value + "]");
+            syntax();
+            return;
         }
     }
 };
@@ -167,6 +186,29 @@ var config = [
     }
 ];
 
+var executeQuery = function(bitsquery, success) {
+    var sql = bitsquery.sql;
+    var params = bitsquery.params;
+
+    pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
+        if(err) {
+            cl("Error opening database connection..");
+            return;
+        }
+
+        client.query(sql, params, function(err, result) {
+            done();
+            if (err) {
+                console.log(err);
+                resp.send("Error " + err);
+                return;
+            }
+
+            success(result);
+        });
+    });
+};
+
 var rest2pg_utils = {
     typeToConfig : function(config) {
         var ret = {};
@@ -226,9 +268,24 @@ var rest2pg_utils = {
                 }
             }
         }
+    },
+
+    queryByGuid : function(mapping, guid, success) {
+        var columns = rest2pg_utils.sqlColumnNames(mapping);
+        var table = mapping.type.split("/")[1];
+
+        var query = bits.SQL('select ' + columns + ' FROM "' + table + '"');
+        query.WHERE('"guid" = ', bits.$(guid));
+
+        executeQuery(query, function(result) {
+            var row=result.rows[0];
+            var output = {};
+
+            rest2pg_utils.mapColumnsToObject(mapping, row, output);
+            if(success) success(output);
+        });
     }
 }
-
 
 function rest2pg(config) {
     for(var configIndex = 0; configIndex < config.length; configIndex++) {
@@ -330,40 +387,14 @@ function rest2pg(config) {
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
-            var table = mapping.type.split("/")[1];
-            var columns = rest2pg_utils.sqlColumnNames(mapping);
+            var guid = req.params.guid;
+            cl("GET " + mapping.type + "/" + req.params.guid);
 
-            var start = Date.now();
-            console.log("GET " + mapping.type + "/" + req.params.guid);
-
-            pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
-                var query = SQL('select ' + columns + ' FROM "' + table + '"');
-                query.WHERE('"guid" = ', $(req.params.guid));
-
-                client.query(query.sql, query.params, function(err, result) {
-                    done();
-                    if (err) {
-                        console.log(err); resp.send("Error " + err);
-                        var stop = Date.now();
-                        console.log("Request took " + (stop - start) + " ms.");
-                        return;
-                    }
-
-                    var row=result.rows[0];
-                    var output = {
-                        $$meta : {
-                            permalink: mapping.type + '/' + row.guid
-                        }
-                    };
-
-                    rest2pg_utils.mapColumnsToObject(mapping, row, output);
-
-                    resp.send(output);
-
-                    var stop = Date.now();
-                    console.log("Request took " + (stop - start) + " ms.");
+            rest2pg_utils.queryByGuid(mapping, guid, function(element) {
+                    // success
+                    element.$$meta = { permalink: mapping.type + '/' + guid };
+                    resp.send(element);
                 });
-            });
         });
 
         // register PUT operation for inserts and updates
@@ -477,10 +508,29 @@ function rest2pg(config) {
 // Configure REST API.
 rest2pg(config);
 
-app.use('/checklogin', checkBasicAuthentication);
-app.get('/checklogin', function(req,resp) {
-    // Do nothing, the user will get 200 OK, or 403 Forbidden by the genera login filter.
-    resp.send('');
+app.use('/me', checkBasicAuthentication);
+app.get('/me', function(req,resp) {
+    var typeToMapping = rest2pg_utils.typeToConfig(config);
+    var mapping = typeToMapping['/persons'];
+    var columns = rest2pg_utils.sqlColumnNames(mapping);
+    var table = mapping.type.split("/")[1];
+
+    var basic = req.headers.authorization;
+    var encoded = basic.substr(6);
+    var decoded = new Buffer(encoded, 'base64').toString('utf-8');
+    var firstColonIndex = decoded.indexOf(':');
+    if(firstColonIndex != -1) {
+        var email = decoded.substr(0,firstColonIndex);
+        var query = bits.SQL('select ' + columns + ' FROM "' + table + '"');
+        query.WHERE('email = ', bits.$(email));
+
+        executeQuery(query, function(result) {
+            var row=result.rows[0];
+            var output = {};
+            rest2pg_utils.mapColumnsToObject(mapping, row, output);
+            resp.send(output);
+        });
+    }
 });
 
 app.listen(app.get('port'), function() {
