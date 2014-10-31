@@ -60,12 +60,12 @@ app.controller('elasTransactionsController', function($scope, $http, $q, elasBac
 app.controller('elasLoginController', function ($scope, $http, $base64, $location) {
     $scope.doLogin = function() {
         console.log("logon()");
-        var header = 'Baisc ' + $base64.encode($scope.email + ":" + $scope.password);
+        var header = 'Basic ' + $base64.encode($scope.email + ":" + $scope.password);
         console.log(header);
         $http.get('/checklogin', {headers: {'Authorization' : header}})
             .then(function ok() {
                 $http.defaults.headers.common.Authorization = header;
-                console.log("OK - header set on all subsequent http requests.");
+                console.log("OK - authentication header set on all subsequent http requests.");
                 $location.path("/messages.html");
             }, function fail() {
                 console.log("FAIL");
