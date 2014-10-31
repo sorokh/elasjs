@@ -1,8 +1,8 @@
-var app = angular.module('elasApp', ['ngRoute','angular-flexslider', 'notifications']);
+var app = angular.module('elasApp', ['ngRoute','angular-flexslider', 'notifications','base64']);
 
 var initPersonsUrl = "/persons?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849";
 
-app.controller('elasController', function ($scope) {
+app.controller('elasController', function ($scope, $base64) {
     $scope.flexSlides = [];
     $scope.flexSlides.push({
         image : "img/photos/1.jpg",
@@ -19,10 +19,6 @@ app.controller('elasController', function ($scope) {
         title : "Titel",
         para : "..."
     });
-    $scope.loggedIn = true;
-
-    var logonForm = {};
-    $scope.logonForm = logonForm;
 });
 
 app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend) {
@@ -61,7 +57,20 @@ app.controller('elasTransactionsController', function($scope, $http, $q, elasBac
         });
 });
 
-app.controller('elasLoginController', function ($scope, $http) {
+app.controller('elasLoginController', function ($scope, $http, $base64, $location) {
+    $scope.doLogin = function() {
+        console.log("logon()");
+        var header = 'Baisc ' + $base64.encode($scope.email + ":" + $scope.password);
+        console.log(header);
+        $http.get('/checklogin', {headers: {'Authorization' : header}})
+            .then(function ok() {
+                $http.defaults.headers.common.Authorization = header;
+                console.log("OK - header set on all subsequent http requests.");
+                $location.path("/messages.html");
+            }, function fail() {
+                console.log("FAIL");
+            });
+    }
 });
 
 app.config(['$routeProvider',

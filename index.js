@@ -11,6 +11,10 @@ app.use(bodyParser.json());
 
 app.use(express.static(__dirname + '/public/'));
 
+var cl = function(x) {
+    console.log(x);
+}
+
 // Force https in production.
 var forceSecure = function(req, res, next) {
     isHttps = req.headers['x-forwarded-proto'] == 'https'
@@ -19,9 +23,71 @@ var forceSecure = function(req, res, next) {
     }
 
     next();
-}
+};
+app.use(forceSecure);
 
-app.use( forceSecure );
+var knownPasswords = {};
+
+var checkBasicAuthentication = function(req, res, next) {
+    var forbidden = function() {
+        cl("Rejecting request !");
+        res.status(403)
+            .send('Forbidden');
+    };
+
+    cl("Checking authorization.");
+    if(req.headers.authorization) {
+        var basic = req.headers.authorization;
+        var encoded = basic.substr(6);
+        var decoded = new Buffer(encoded, 'base64').toString('utf-8');
+        var firstColonIndex = decoded.indexOf(':');
+        if(firstColonIndex != -1) {
+            var email = decoded.substr(0,firstColonIndex);
+            var password = decoded.substr(firstColonIndex + 1);
+
+            if(email && password && email.length > 0 && password.length > 0) {
+                cl(knownPasswords);
+                if(knownPasswords[email]) {
+                    if(knownPasswords[email] === password) {
+                        cl("cached password pass");
+                        next();
+                    } else forbidden();
+                } else {
+                    pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
+                        var q = bits.SQL('select count(*) FROM persons');
+                        q.WHERE('email = ', bits.$(email), bits.AND, 'password = ', bits.$(password));
+
+                        cl(q.sql);
+                        client.query(q.sql, q.params, function(err, result) {
+                            done();
+                            if (err) {
+                                cl(err);
+                                forbidden();
+                            } else {
+                                var count = parseInt(result.rows[0].count);
+                                cl(count);
+                                if(count == 1) {
+                                    // Found matching record, add to cache for subsequent requests.
+                                    knownPasswords[email] = password;
+                                    cl("fresh password pass");
+                                    next();
+                                } else {
+                                    cl("Wrong combination of email / password. Found " + count + " records.");
+                                    forbidden();
+                                }
+                            }
+
+                        });
+                    });
+                }
+            } else forbidden();
+        } else forbidden();
+    } else {
+        cl("No Authorization header detected.");
+        forbidden();
+    }
+
+};
 
 var filterOnCommunities = function(value, select) {
     if(value) {
@@ -52,6 +118,10 @@ var config = [
         },
         query: {
             communities: filterOnCommunities
+        },
+        afterupdate : function(person) {
+            // clear password cache if person is updated.
+            knownPasswords = {};
         }
     },
     {
@@ -166,9 +236,12 @@ function rest2pg(config) {
         var mapping = config[configIndex];
         var SQL = bits.SQL;
         var $ = bits.$;
+        var url;
 
         // register list resource for this type.
-        app.get(mapping.type, function(req, resp) {
+        url = mapping.type;
+        app.use(url, checkBasicAuthentication);
+        app.get(url , function(req, resp) {
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
@@ -252,7 +325,9 @@ function rest2pg(config) {
         }); // app.get - list resource
 
         // register single resource
-        app.get(mapping.type + '/:guid', function(req, resp) {
+        url = mapping.type + '/:guid';
+        app.use(url, checkBasicAuthentication);
+        app.get(url, function(req, resp) {
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
@@ -293,7 +368,9 @@ function rest2pg(config) {
         });
 
         // register PUT operation for inserts and updates
-        app.put(mapping.type + '/:guid', function(req, resp) {
+        url = mapping.type + '/:guid';
+        app.use(url, checkBasicAuthentication);
+        app.put(url, function(req, resp) {
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
@@ -361,6 +438,7 @@ function rest2pg(config) {
                                 console.log("Request took " + (stop - start) + " ms.");
                                 return;
                             }
+                            if(mapping.afterupdate) mapping.afterput(element);
                             var stop = Date.now();
                             console.log("Request took " + (stop - start) + " ms.");
                         });
@@ -387,6 +465,7 @@ function rest2pg(config) {
                                 console.log("Request took " + (stop - start) + " ms.");
                                 return;
                             }
+                            if(mapping.afterput) mapping.afterinsert(element);
                             var stop = Date.now();
                             console.log("Request took " + (stop - start) + " ms.");
                         });
@@ -399,124 +478,10 @@ function rest2pg(config) {
 // Configure REST API.
 rest2pg(config);
 
-app.get('/generatetestdata', function(req,resp) {
-/*    var max_communities = 2;
-    var max_persons = 2;
-    var max_messages = 2;*/
-    var max_communities = 40;
-    var max_persons = 70;
-    var max_messages = 2;
-
-    var generateUUID = function() {
-        var d = new Date().getTime();
-        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = (d + Math.random()*16)%16 | 0;
-            d = Math.floor(d/16);
-            return (c=='x' ? r : (r&0x7|0x8)).toString(16);
-        });
-        return uuid;
-    };
-
-    var communities = [];
-    for(var community=0; community<max_communities; community++) {
-        var communityuuid = generateUUID();
-        var currentcommunity = {
-            "guid": communityuuid,
-            "name": "Community " + Math.random(),
-            "facebook": "https://www.facebook.com/pages/LETS-Regio-Dendermonde/113915938675095?ref=ts&fref=ts" + Math.random(),
-            "street": "Fabrieksstraat",
-            "streetNumber": "31",
-            "streetBus" : "1a",
-            "zipcode": "9280",
-            "city": "Lebbeke",
-            "phone": "0492792059",
-            "email": "dimitry_dhondt@yahoo.com"
-        };
-        communities.push(currentcommunity);
-    }
-
-    var persons = [];
-    for(var community=0; community<communities.length; community++) {
-        var currentcommunity = communities[community];
-        var communityuuid = currentcommunity.guid;
-
-        for(var person=0; person<max_persons; person++) {
-            var personuuid = generateUUID();
-            var currentperson = {
-                "guid": personuuid,
-                "firstname": "John " + Math.random(),
-                "lastName": "Doe",
-                "street": "Fabrieksstraat",
-                "streetNumber": "31",
-                "streetBus": "1a",
-                "zipcode": "9280",
-                "city": "Lebbeke",
-                "phone": "0492792059",
-                "email": "dimitry_dhondt@yahoo.com",
-                "balance": 0,
-                "community": communityuuid
-            };
-            persons.push(currentperson);
-        }
-    }
-
-    var messages = [];
-    for(var person=0; person<persons.length; person++) {
-        var currentperson = persons[person];
-        var personuuid = currentperson.guid;
-
-        for(var message=0; message<max_messages; message++) {
-            var messageguid = generateUUID();
-            var currentmessage = {
-                "guid": messageguid,
-                "person": personuuid,
-                "posted": "2014-10-29T02:05:06.000Z",
-                "type": "request",
-                "title": "Title van de vraag.",
-                "description": "Ik vraag ..." + Math.random(),
-                "amount": 20,
-                "unit": "uur",
-                "community": communityuuid
-            };
-            messages.push(currentmessage);
-        }
-    }
-
-    console.log("communities " + communities.length);
-    console.log("persons " + persons.length);
-    console.log("messages " + messages.length);
-
-    var object2sql = function(table, object) {
-        var insert = 'INSERT INTO ' + table + ' VALUES (';
-        var first = true;
-        for (var key in object) {
-            if (object.hasOwnProperty(key)) {
-                if(!first) insert += ",";
-                insert += "'" + object[key] + "'";
-                first = false;
-            }
-        }
-        insert += ');\n';
-
-        return insert;
-    };
-
-    var stream = fs.createWriteStream("/tmp/insert.sql");
-    stream.once('open', function(fd) {
-        for(var i=0; i<communities.length; i++) {
-            var insert = object2sql("communities", communities[i]);
-            stream.write(insert);
-        }
-        for(var i=0; i<persons.length; i++) {
-            var insert = object2sql("persons", persons[i]);
-            stream.write(insert);
-        }
-        for(var i=0; i<messages.length; i++) {
-            var insert = object2sql("messages", messages[i]);
-            stream.write(insert);
-        }
-        stream.end();
-    });
+app.use('/checklogin', checkBasicAuthentication);
+app.get('/checklogin', function(req,resp) {
+    // Do nothing, the user will get 200 OK, or 403 Forbidden by the genera login filter.
+    resp.send('');
 });
 
 app.listen(app.get('port'), function() {
