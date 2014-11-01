@@ -35,7 +35,6 @@ var checkBasicAuthentication = function(req, res, next) {
         res.status(401).send("Forbidden");
     };
 
-    cl("Checking authorization.");
     if(req.headers.authorization) {
         var basic = req.headers.authorization;
         var encoded = basic.substr(6);
@@ -48,7 +47,6 @@ var checkBasicAuthentication = function(req, res, next) {
             if(email && password && email.length > 0 && password.length > 0) {
                 if(knownPasswords[email]) {
                     if(knownPasswords[email] === password) {
-                        cl("cached password pass");
                         next();
                     } else forbidden();
                 } else {
@@ -68,7 +66,6 @@ var checkBasicAuthentication = function(req, res, next) {
                                 if(count == 1) {
                                     // Found matching record, add to cache for subsequent requests.
                                     knownPasswords[email] = password;
-                                    cl("fresh password pass");
                                     next();
                                 } else {
                                     cl("Wrong combination of email / password. Found " + count + " records.");
@@ -342,7 +339,7 @@ function rest2pg(config) {
                 if(req.query.limit) query.LIMIT(req.query.limit);
                 if(req.query.offset) query.OFFSET(req.query.offset);
 
-                console.log(query.sql);
+//                console.log(query.sql);
                 execSQL(query, function(result) {
                     var rows=result.rows;
                     var results = [];
