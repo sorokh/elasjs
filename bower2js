@@ -10,3 +10,5 @@ cp bower_components/angular-route/angular-route.min.js public/bowerjs
 cp bower_components/angular-flexslider/angular-flexslider.js public/bowerjs
 cp bower_components/moment/min/moment-with-locales.min.js public/bowerjs
 cp bower_components/angular-base64/angular-base64.min.js public/bowerjs
+cp bower_components/angular-loading-bar/src/loading-bar.css public/bowercss
+cp bower_components/angular-loading-bar/src/loading-bar.js public/bowerjs

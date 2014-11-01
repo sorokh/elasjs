@@ -12,6 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Styles -->
+    <link href="/bowercss/loading-bar.css" rel="stylesheet">
+
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/flexslider.css" rel="stylesheet">
     <link href="/css/prettyPhoto.css" rel="stylesheet">
@@ -72,9 +74,9 @@
         <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
             <!-- Navigation links starts here -->
             <ul class="nav navbar-nav">
-                <li><a href="#/messages.html">Vraag & Aanbod </a></li>
-                <li><a href="#/members.html">Leden </a></li>
-                <li><a href="#/transactions.html">Transacties </a></li>
+                <li><a ng-show="authenticated()" href="#/messages.html">Vraag & Aanbod </a></li>
+                <li><a ng-show="authenticated()" href="#/members.html">Leden </a></li>
+                <li><a ng-show="authenticated()" href="#/transactions.html">Transacties </a></li>
                 <!--
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown">Contact <b class="caret"></b></a>
@@ -83,6 +85,18 @@
                     </ul>
                 </li>
                 -->
+                <ul ng-show="authenticated()" class="nav navbar-nav navbar-right">
+                    <li class="dropdrown">
+                        <!-- Shows a user icon, the login name (!), and a caret to indicate drop-down -->
+                        <a class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-user"></span> {{me.firstname}} {{me.lastname}} <span class="caret"></span></a>
+                        <ul class="dropdown-menu" role="menu">
+                            <!-- Add more user related actions here is necessary -->
+                            <li><a href="#/settings.html"><span class="fa fa-cog"></span> Instellingen</a></li>
+                            <li class="divider"></li>
+                            <li><a ng-click="logout()"><span class="fa fa-sign-out"></span> Uitloggen</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </ul>
         </nav>
     </div>
@@ -126,6 +140,8 @@
 <script src="/bowerjs/angular-flexslider.js"></script>
 <script src="/bowerjs/moment-with-locales.min.js"></script>
 <script src="/bowerjs/angular-base64.min.js"></script>
+<script src="/bowerjs/loading-bar.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/textAngular/1.2.2/textAngular.min.js"></script>
 <script src="js/elas.js"></script>
 <script src="js/notification.js"></script>
 <script src="js/backend.js"></script>

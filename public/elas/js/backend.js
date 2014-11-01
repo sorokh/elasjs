@@ -187,26 +187,29 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         return ret;
     }
 
-    that.expandPerson = function(message, key, initurl) {
+    var hrefToPerson = {};
+
+    that.initExpandPerson = function(persons) {
+        hrefToPerson = toArray(persons);
+    }
+
+    that.expandPerson = function(message, key) {
         var defer = $q.defer();
 
-        that.getListResource(initurl)
-            .then(function(persons) {
-                var hrefToPerson = toArray(persons);
-                var person = hrefToPerson[message[key].href];
-                if(!person) {
-                    that.getResource(message[key].href)
-                        .then(function(data) {
-                            message[key].$$expanded = person;
-                            defer.resolve(message);
-                        }, function(error) {
-                            // TODO
-                        });
-                } else {
-                    message[key].$$expanded = person;
+        var person = hrefToPerson[message[key].href];
+        if(!person) {
+            that.getResource(message[key].href)
+                .then(function(data) {
+                    message[key].$$expanded = data;
+                    hrefToPerson[message[key].href] = data;
                     defer.resolve(message);
-                }
-            });
+                }, function(error) {
+                    // TODO
+                });
+        } else {
+            message[key].$$expanded = person;
+            defer.resolve(message);
+        }
 
         return defer.promise;
     };

@@ -1,8 +1,6 @@
-var app = angular.module('elasApp', ['ngRoute','angular-flexslider', 'notifications','base64']);
+var app = angular.module('elasApp', ['ngRoute','angular-flexslider', 'notifications','base64','angular-loading-bar']);
 
-var initPersonsUrl = "/persons?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849";
-
-app.controller('elasController', function ($scope, $base64) {
+app.controller('elasController', function ($scope, $base64, $http, $location) {
     $scope.flexSlides = [];
     $scope.flexSlides.push({
         image : "img/photos/1.jpg",
@@ -19,14 +17,35 @@ app.controller('elasController', function ($scope, $base64) {
         title : "Titel",
         para : "..."
     });
+
+    $scope.authenticated = function() {
+        var authentication = $http.defaults.headers.common.Authorization;
+        if(authentication && authentication.indexOf("Basic ") == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    $scope.logout = function() {
+        delete $http.defaults.headers.common.Authorization;
+        $location.path("/");
+    }
 });
 
-app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged('/messages?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849')
-    .then(function(list) {
+app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend, $location) {
+    if(!$scope.authenticated()) {
+        $location.path("/");
+        return;
+    }
+
+    elasBackend.getListResourcePaged('/messages', {
+        communities: $scope.me.community.href,
+        orderby: 'posted',
+        descending: true
+    }).then(function(list) {
         var promises = [];
         angular.forEach(list.results, function(message,key) {
-            promises.push(elasBackend.expandPerson(message, 'person', initPersonsUrl));
+            promises.push(elasBackend.expandPerson(message, 'person'));
         });
         $q.all(promises)
             .then(function(result) {
@@ -35,20 +54,45 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
     });
 });
 
-app.controller('elasMembersController', function($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged("/persons?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849")
-        .then(function(list) {
-        $scope.persons = list.results;
+var initPersons = function($scope, elasBackend) {
+    elasBackend.getListResourcePaged("/persons", {
+        communities: $scope.me.community.href,
+        orderby: 'firstname,lastname',
+        descending: false
+    }).then(function(persons) {
+        elasBackend.initExpandPerson(persons);
+    });
+}
+
+app.controller('elasMembersController', function($scope, $http, $q, elasBackend, $location) {
+    if(!$scope.authenticated()) {
+        $location.path("/");
+        return;
+    }
+
+    elasBackend.getListResourcePaged("/persons", {
+        communities: $scope.me.community.href,
+        orderby: 'firstname,lastname',
+        descending: false
+    }).then(function(persons) {
+        $scope.persons = persons.results;
     });
 });
 
-app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend) {
-    elasBackend.getListResourcePaged('/transactions?communities=%2Fcommunities%2F8bf649b4-c50a-4ee9-9b02-877aa0a71849&limit=100')
-        .then(function(list) {
+app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend, $location) {
+    if(!$scope.authenticated()) {
+        $location.path("/");
+        return;
+    }
+
+    elasBackend.getListResourcePaged('/transactions', {
+        communities : $scope.me.community.href,
+        limit :100
+    }).then(function(list) {
             var promises = [];
             angular.forEach(list.results, function(transaction,key) {
-                promises.push(elasBackend.expandPerson(transaction, 'fromperson', initPersonsUrl));
-                promises.push(elasBackend.expandPerson(transaction, 'toperson', initPersonsUrl));
+                promises.push(elasBackend.expandPerson(transaction, 'fromperson'));
+                promises.push(elasBackend.expandPerson(transaction, 'toperson'));
             });
             $q.all(promises)
                 .then(function(result) {
@@ -57,22 +101,47 @@ app.controller('elasTransactionsController', function($scope, $http, $q, elasBac
         });
 });
 
-app.controller('elasLoginController', function ($scope, $http, $base64, $location) {
+app.controller('elasLoginController', function ($scope, $http, $base64, $location, $rootScope, elasBackend) {
     $scope.email = 'sabinedewaele@email.be';
     $scope.password = 'sabine';
     $scope.doLogin = function() {
-        console.log("logon()");
         var header = 'Basic ' + $base64.encode($scope.email + ":" + $scope.password);
-        console.log(header);
         $http.get('/me', {headers: {'Authorization' : header}})
             .then(function ok(resp) {
                 var me = resp.data;
                 $http.defaults.headers.common.Authorization = header;
-                console.log("OK - authentication header set on all subsequent http requests.");
-                console.log(me);
+                $rootScope.me = me;
+                // Initialize persons of this group, to speed up client-side expansion.
+                initPersons($scope,elasBackend);
                 $location.path("/messages.html");
             }, function fail() {
-                console.log("FAIL");
+                console.log("Authentication failed.");
+            });
+    }
+});
+
+app.controller('elasRegisterNewCommunityController', function ($scope, $http, $base64, $location) {
+});
+
+app.controller('elasNewMessageController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
+    if(!$scope.authenticated()) {
+        $location.path("/");
+        return;
+    }
+
+    $scope.message = {};
+
+    $scope.create = function() {
+        $scope.message.person = { href: $scope.me.$$meta.permalink };
+        $scope.message.community = $scope.me.community;
+        console.log($scope.message);
+        elasBackend.createResource('messages', $scope.message)
+            .then(function ok(resp) {
+                var cache = $cacheFactory.get('$http');
+                cache.removeAll();
+                $location.path("/messages.html");
+            }, function failed(err) {
+                console.log(err);
             });
     }
 });
@@ -98,6 +167,14 @@ app.config(['$routeProvider',
             }).
             when('/contact.html', {
                 templateUrl: 'contact.html'
+            }).
+            when('/register_new_community.html', {
+                templateUrl: 'register_new_community.html',
+                controller: 'elasRegisterNewCommunityController'
+            }).
+            when('/new_message.html', {
+                templateUrl: 'new_message.html',
+                controller: 'elasNewMessageController'
             }).
             otherwise({
                 redirectTo: '/#/'

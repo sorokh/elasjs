@@ -14,7 +14,10 @@ CREATE TABLE "communities" (
   "zipcode" character varying(16) not null,
   "city" character varying(64) not null,
   "phone" character varying(32),
-  "email" character varying(32) not null
+  "email" character varying(32) not null,
+  "adminpassword" character varying(64) not null,
+  "website" character varying(128),
+  "currencyname" character varying(32) not null
 );
 
 CREATE TABLE "persons" (

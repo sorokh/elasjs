@@ -1,0 +1,62 @@
+<div class="row">
+    <div class="col-md-12">
+        <h3>Nieuwe Vraag/Aanbod</h3>
+        <hr/>
+        <div class="form">
+            <!-- Register form (not working)-->
+            <form class="form-horizontal">
+                <!-- Vraag of Aanbod ? -->
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="name"></label>
+
+                    <div class="col-md-9">
+                        <input type="radio" name="type" value="request" ng-model="message.type"> Vraag &nbsp;
+                        <input type="radio" name="type" value="offer" ng-model="message.type"> Aanbod
+                    </div>
+                </div>
+                <!-- Title -->
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="name">Titel</label>
+
+                    <div class="col-md-9">
+                        <input type="text" class="form-control" id="name" placeholder="" ng-model="message.title">
+                    </div>
+                </div>
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="description">Omschrijving</label>
+
+                    <div class="col-md-9">
+                        <textarea class="form-control" id="description" placeholder="" rows="10" ng-model="message.description"></textarea>
+                    </div>
+                </div>
+
+                <!-- Amount -->
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="amount">Punten</label>
+
+                    <div class="col-md-1">
+                        <input type="text" class="form-control" id="amount" placeholder="" ng-model="message.amount">
+                    </div>
+                </div>
+                <!-- Unit -->
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="unit">Per</label>
+
+                    <div class="col-md-1">
+                        <input type="text" class="form-control" id="unit" placeholder="" ng-model="message.unit">
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="form-group">
+                    <!-- Buttons -->
+                    <div class="col-md-12 text-right">
+                        <a class="btn btn-primary" ng-click="create()">Opslaan</a>
+                        <a href="#/messages.html" class="btn btn-default">Annuleren</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

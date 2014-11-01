@@ -1,13 +1,20 @@
-<div class="row">
-    <div class="col-md-8">
 
-        <h1>Recent Vraag en Aanbod</h1>
-    </div>
-    <div class="col-md-4 text-right">
-        Zoeken <input width="200" ng-model="messagesFilter">
-    </div>
-</div>
+
 <div class="blog">
+    <div class="row posts">
+        <div class="col-md-12">
+            <h1>Recent Vraag en Aanbod</h1>
+        </div>
+    </div>
+    <div class="row posts">
+        <div class="col-md-8">
+            <input id="search" type="text" class="form-control" placeholder="Zoekterm. Bvb. Losse term, naam van plaatser, datum plaatsing, vraag/aanbod, ... " ng-model="messagesFilter">
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="#/new_message.html" class="btn btn-primary">Nieuw bericht ingeven</a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-12">
             <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
