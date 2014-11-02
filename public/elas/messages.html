@@ -8,7 +8,7 @@
 <div class="row">
     <div class="col-md-8">
         <input id="search" type="text" class="form-control" ng-model="messagesFilter"
-               placeholder="Zoekterm. Bvb. Losse term, naam van plaatser, datum plaatsing, vraag/aanbod, ... ">
+               placeholder="Zoekterm. Bvb. naam, datum, vraag/aanbod, ... ">
     </div>
     <div class="col-md-4 text-right">
         <a href="#/new_message.html" class="btn btn-primary">Nieuw bericht ingeven</a>
@@ -20,23 +20,19 @@
         <div class="col-md-12">
             <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
                 <div class="entry">
-
                     <div class="meta">
                         <i class="fa fa-calendar"></i> {{message.posted}} <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
                     </div>
+                        <h4>
+                            <span ng-show="message.type == 'offer'">(Aanbod) </span>
+                            <span ng-show="message.type == 'request'">(Vraag) </span>
+                            {{message.title}}
+                        </h4>
 
-                    <h4>
-                        <span ng-show="message.type == 'offer'">(Aanbod) </span>
-                        <span ng-show="message.type == 'request'">(Vraag) </span>
-                        {{message.title}}
-                    </h4>
-                    <p>
-                        {{message.description}}<br>
-                        <span ng-show="message.amount && message.unit">{{message.amount}} duimkes per {{message.unit}}</span>
-                        <span ng-hide="message.amount && message.unit">Er werd geen vraagprijs ingegeven.</span>
-                        <br>
-                        <a href="">Toon alle details...</a>
-                    </p>
+                    {{message.description}} <span ng-show="message.amount && message.unit"> ({{message.amount}} duimkes per {{message.unit}})</span><br>
+                    <span ng-show="message.person.$$expanded.street"><a target="_blank" ng-href="https://www.google.be/maps/place/{{message.person.$$expanded.street}}+{{message.person.$$expanded.streetnumber}},{{message.person.$$expanded.zipcode}}+{{message.person.$$expanded.city}}"><span class="fa fa-map-marker"></span> {{message.person.$$expanded.street}} {{message.person.$$expanded.streetnumber}} {{message.person.$$expanded.streetbus}}, {{message.person.$$expanded.zipcode}} {{message.person.$$expanded.city}}</a>&nbsp;&nbsp;</span>
+                    <span ng-show="message.person.$$expanded.email"><a ng-href="mailto:{{message.person.$$expanded.email}}"><span class="fa fa-envelope"></span> {{message.person.$$expanded.email}}</a>&nbsp;&nbsp;</span>
+                    <span ng-show="message.person.$$expanded.phone"><span class="fa fa-mobile-phone"></span> {{message.person.$$expanded.phone}}&nbsp;&nbsp;</span>
                 </div>
             </div>
             <!-- Pagination
