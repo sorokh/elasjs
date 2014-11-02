@@ -10,124 +10,136 @@
                         <h3>Een nieuwe groep maken op <span class="color">Elas-NG</span></h3>
                         <hr/>
                         <div class="form">
-                            <!-- Register form (not working)-->
-                            <form class="form-horizontal">
-                                <!-- Name -->
+                            <form class="form-horizontal" name="cf" novalidate>
                                 <div class="form-group">
-                                    <label class="control-label col-md-3" for="name">Groepsnaam</label>
+                                    <label class="control-label col-md-3" for="name">Groepsnaam *</label>
 
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" id="name" placeholder="LETS Herstappe">
+                                    <div class="col-md-9" ng-class="errClass('cf','name')">
+                                        <input type="text" class="form-control" name="name" id="name" placeholder="LETS Herstappe"
+                                               ng-model="community.name" required ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','name')">Groepsnaam is verplicht.</span>
                                     </div>
                                 </div>
-                                <!-- Street -->
-                                <div class="form-group">
-                                    <label class="control-label col-md-3" for="name">Straat</label>
 
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" id="street">
+                                <div class="form-group">
+                                    <label class="control-label col-md-3" for="name">Straat *</label>
+
+                                    <div class="col-md-9" ng-class="errClass('cf','street')">
+                                        <input type="text" class="form-control" id="street" name="street"
+                                               ng-model="community.street" required ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','street')">Straat is verplicht.</span>
                                     </div>
                                 </div>
-                                <!-- Streetnumber -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="name">Nummer</label>
 
-                                    <div class="col-md-3">
-                                        <input type="text" class="form-control" id="streetnumber">
+                                    <div class="col-md-3" ng-class="errClass('cf','streetnumber')">
+                                        <input type="text" class="form-control" id="streetnumber" name="streetnumber"
+                                               ng-model="community.streetnumber" required ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','streetnumber')">Nummer is verplicht.</span>
                                     </div>
                                 </div>
-                                <!-- Streetbus -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="name">Bus</label>
 
                                     <div class="col-md-3">
-                                        <input type="text" class="form-control" id="streetbus">
+                                        <input type="text" class="form-control" id="streetbus"
+                                               ng-model="community.streetbus">
                                     </div>
                                 </div>
-                                <!-- Zipcode -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="zipcode">Postcode</label>
 
-                                    <div class="col-md-3">
-                                        <input type="text" class="form-control" id="zipcode">
+                                    <div class="col-md-3" ng-class="errClass('cf','zipcode')">
+                                        <input type="text" class="form-control" id="zipcode" name="zipcode"
+                                               ng-model="community.zipcode" required ng-pattern="/^[0-9][0-9][0-9][0-9]$/" ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','zipcode')">Postcode moet uit 4 cijfers bestaan. Bvb. 2060.</span>
                                     </div>
                                 </div>
-                                <!-- City -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="city">Gemeente</label>
 
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" id="city">
+                                    <div class="col-md-9" ng-class="errClass('cf','city')">
+                                        <input type="text" class="form-control" id="city" name="city"
+                                               ng-model="community.city" required ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','city')">Gemeente is verplicht.</span>
                                     </div>
                                 </div>
-                                <!-- Phone -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="phone">Telefoon</label>
 
-                                    <div class="col-md-6">
-                                        <input type="text" class="form-control" id="phone">
+                                    <div class="col-md-6" ng-class="errClass('cf','phone')">
+                                        <input type="text" class="form-control" id="phone" name="phone"
+                                               ng-model="community.phone" required ng-pattern="/^[0-9/ ]*$/" ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','phone')">Het telefoon bevat een fout.</span>
                                     </div>
                                 </div>
-                                <!-- Email -->
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="email">E-mail</label>
 
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" id="email">
+                                    <div class="col-md-9" ng-class="errClass('cf','email')">
+                                        <input type="email" class="form-control" id="email" name="email"
+                                               ng-model="community.email" ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','email')">Het e-mail adres is niet correct.</span>
                                     </div>
                                 </div>
-                                <!-- currencyname -->
+
                                 <div class="form-group">
-                                    <label class="control-label col-md-3" for="currencyname">Naam munt</label>
+                                    <label class="control-label col-md-3" for="currencyname">Naam munt (enkelvoudig)</label>
 
-                                    <div class="col-md-3">
-                                        <input type="text" class="form-control" id="currencyname" placeholder="duim/pluim">
+                                    <div class="col-md-3" ng-class="errClass('cf','currencyname')">
+                                        <input type="text" class="form-control" id="currencyname" name="currencyname"
+                                               placeholder="duim/pluim"
+                                               ng-model="community.currencyname" required ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','currencyname')">Gelieve een naam in te geven voor jullie munt.</span>
                                     </div>
                                 </div>
 
-                                <!-- Facebook -->
                                 <div class="form-group">
-                                    <label class="control-label col-md-3" for="facebook">(Pubieke) Facebook</label>
+                                    <label class="control-label col-md-3" for="facebook">Facebook (Pubiek)</label>
 
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" id="facebook">
+                                    <div class="col-md-9" ng-class="errClass('cf','facebook')">
+                                        <input type="url" class="form-control" id="facebook" name="facebook"
+                                               ng-model="community.facebook" ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','facebook')">De URL bevat een fout.</span>
                                     </div>
                                 </div>
-                                <!-- Facebook -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="website">Website</label>
 
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" id="website"
-                                               placeholder="http://letsvlaanderen.be/herstappe">
+                                    <div class="col-md-9" ng-class="errClass('cf','website')">
+                                        <input type="text" class="form-control" id="website" name="website"
+                                               placeholder="http://letsvlaanderen.be/herstappe"
+                                               ng-model="community.website" ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','website')">De URL bevat een fout.</span>
                                     </div>
                                 </div>
-                                <!-- Password -->
+
                                 <div class="form-group">
                                     <label class="control-label col-md-3" for="email">Admin paswoord</label>
 
-                                    <div class="col-md-9">
-                                        <input type="password" class="form-control" id="password">
-                                    </div>
-                                </div>
-                                <!-- Checkbox -->
-                                <div class="form-group">
-                                    <div class="col-md-8 col-md-offset-3">
-                                        <label class="checkbox-inline">
-                                            <input type="checkbox" id="inlineCheckbox1" value="agree"> Ik ga akkoord met de voorwaarden.
-                                        </label>
+                                    <div class="col-md-9" ng-class="errClass('cf','adminpassword')">
+                                        <input type="password" class="form-control" id="adminpassword" name="adminpassword"
+                                               ng-model="community.adminpassword" ng-focus>
+                                        <span class="help-block" ng-show="errShow('cf','adminpassword')">Gelieve een administratief paswoord op te geven.</span>
                                     </div>
                                 </div>
 
-                                <!-- Buttons -->
                                 <div class="form-group">
-                                    <!-- Buttons -->
-                                    <div class="col-md-8 col-md-offset-3">
-                                        <button type="submit" class="btn btn-default">Aanvragen</button>
+                                    <div class="col-md-9 col-md-offset-3">
+                                        <div class="text-info help-block" ng-show="saved">Je aanvraag is correct geregistreerd !</div>
+                                    </div>
+                                    <div class="col-md-9 col-md-offset-3">
+                                        <a ng-click="save('cf')" class="btn btn-primary">Aanvragen</a>
                                     </div>
                                 </div>
                             </form>
-                            <hr/>
                             <div class="lregister">
                                 <a href="#/">Terug naar de login pagina.</a>
                             </div>

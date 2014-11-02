@@ -3,6 +3,8 @@ var bodyParser = require('body-parser');
 var pg = require('pg');
 var bits = require('sqlbits');
 var fs = require("fs");
+var validator = require('jsonschema').Validator;
+var Q = require("q");
 
 var app = express();
 
@@ -117,7 +119,11 @@ var filterOnCommunities = function(value, select) {
 
 var config = [
     {
+        // Base url
         type: "/persons",
+        // Requires authentication ?
+        public: false,
+        // Map json properties to postgres columns
         map: {
             firstname: {},
             lastname: {},
@@ -131,9 +137,13 @@ var config = [
             balance: {},
             community: {references: '/communities'}
         },
+        // JSON Schema
+        schema: {},
+        // Add extra URL parameters to SQL query.
         query: {
             communities: filterOnCommunities
         },
+        // Afterupdate is executed when a successful update is executed.
         afterupdate : function(person) {
             // clear password cache if person is updated.
             knownPasswords = {};
@@ -141,6 +151,7 @@ var config = [
     },
     {
         type: "/messages",
+        public: false,
         map: {
             person: {references: '/persons'},
             posted: {
@@ -154,36 +165,113 @@ var config = [
             unit: {},
             community: {references: '/communities'}
         },
+        schema: {},
         query: {
             communities: filterOnCommunities
         }
     },
     {
         type: "/communities",
+        public: true,
         map: {
             name: {},
             street: {},
             streetnumber: {},
             zipcode: {},
             city: {},
-            facebook: {},
+            // Only allow create/update to set adminpassword, never show on output.
+            adminpassword: { onlyinput: true },
             phone: {},
-            email: {}
+            email: {},
+            facebook: {},
+            website: {},
+            currencyname: {}
+        },
+        schema: {
+            $schema: "http://json-schema.org/schema#",
+            name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 256
+            },
+            street: {
+                type: "string",
+                minLength: 1,
+                maxLength: 256
+            },
+            streetnumber: {
+                type: "string",
+                minLength: 1,
+                maxLength: 16
+            },
+            streetbus: {
+                type: "string",
+                minLength: 1,
+                maxLength: 16
+            },
+            zipcode: {
+                type: "integer",
+                multipleOf: 1.0,
+                minimum: 1000,
+                maximum: 9999
+            },
+            city: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64
+            },
+            phone: {
+                type: "string",
+                pattern: "^[0-9]*$",
+                minLength: 9,
+                maxLength: 10
+            },
+            email: {
+                type: "string",
+                format: "email",
+                minLength: 1,
+                maxLength: 32
+            },
+            adminpassword: {
+                type: "string",
+                minLength: 5,
+                maxLength: 64
+            },
+            website: {
+                type: "string",
+                minLength: 1,
+                maxLength: 128,
+                format: "uri"
+            },
+            facebook: {
+                type: "string",
+                minLength: 0,
+                maxLength: 256,
+                format: "uri"
+            },
+            currencyname: {
+                type: "string",
+                minLength: 1,
+                maxLength: 32
+            },
+            required: ["name","street","streetnumber","zipcode","city", "phone","email", "adminpassword","currencyname"]
         }
     },
     {
         type: "/transactions",
+        public: false,
         map: {
             transactiontimestamp: {},
             fromperson: {references: '/persons'},
             toperson: {references: '/persons'},
             description: {},
             amount: {}
-        }
+        },
+        schema: {}
     }
 ];
 
-var execSQL = function(bitsquery, success) {
+var execSQL = function(bitsquery, success, failure) {
     var sql = bitsquery.sql;
     var params = bitsquery.params;
 
@@ -196,8 +284,10 @@ var execSQL = function(bitsquery, success) {
         client.query(sql, params, function(err, result) {
             done();
             if (err) {
+                console.log("Unable to execute SQL [" + sql + "]");
+                console.log(params);
                 console.log(err);
-                resp.send("Error " + err);
+                if(failure) failure(err);
                 return;
             }
 
@@ -224,6 +314,8 @@ var rest2pg_utils = {
                 if(mapping.map[key].references) {
                     var referencedType = mapping.map[key].references;
                     element[key] = { href: typeToConfig[referencedType].type + '/' + row[key] };
+                } else if(mapping.map[key].onlyinput) {
+                    // Skip on output !
                 } else {
                     element[key] = row[key];
                 }
@@ -285,6 +377,34 @@ var rest2pg_utils = {
             rest2pg_utils.mapColumnsToObject(mapping, row, output);
             if(success) success(output);
         });
+    },
+
+    getSchemaValidationErrors : function(json, schema) {
+        var asCode = function(s) {
+            // return any string as code for REST API error object.
+            var ret = s;
+
+            ret = ret.toLowerCase().trim();
+            ret = ret.replace(/[^a-z0-9 ]/gmi, "");
+            ret = ret.replace(/ /gmi, ".");
+
+            return ret;
+        }
+        var v = new validator();
+        var result = v.validate(json, schema);
+
+        if(result.errors && result.errors.length > 0) {
+            var ret = {};
+            ret.errors = [];
+            ret.document = json;
+            for(var i=0; i<result.errors.length; i++) {
+                var current = result.errors[i];
+                var err = {};
+                err.code = asCode(current.message);
+                ret.errors.push(err);
+            }
+            return ret;
+        }
     }
 }
 
@@ -295,10 +415,25 @@ function rest2pg(config) {
         var $ = bits.$;
         var url;
 
+        // register schema for external usage. public.
+        url = mapping.type + '/schema';
+        app.get(url, function(req, resp) {
+            resp.set('Content-Type', 'application/json');
+            var typeToConfig = rest2pg_utils.typeToConfig(config);
+            var type = '/' + req.route.path.split("/")[1];
+            var mapping = typeToConfig[type];
+            cl("GET " + mapping.type + "/schema");
+
+            resp.send(mapping.schema);
+        });
+
         // register list resource for this type.
         url = mapping.type;
-        app.use(url, checkBasicAuthentication);
+        if(!mapping.public) {
+            app.use(url, checkBasicAuthentication);
+        }
         app.get(url , function(req, resp) {
+            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
@@ -329,7 +464,7 @@ function rest2pg(config) {
                         }
                     }
                     if(valid) {
-                        query.ORDERBY(orders);
+                        query._("ORDER BY " + orders);
                         if(descending) query._("DESC");
                     } else {
                         cl("Can not order by [" + orderby + "]. One or more unknown properties. Ignoring orderby.");
@@ -339,7 +474,8 @@ function rest2pg(config) {
                 if(req.query.limit) query.LIMIT(req.query.limit);
                 if(req.query.offset) query.OFFSET(req.query.offset);
 
-//                console.log(query.sql);
+                cl(query.sql);
+                cl(query.params);
                 execSQL(query, function(result) {
                     var rows=result.rows;
                     var results = [];
@@ -368,14 +504,17 @@ function rest2pg(config) {
                         results : results
                     };
                     resp.send(output);
-                });
-            });
+                }, function(error) {resp.status(500).send(error);});
+            }, function(error) {resp.status(500).send(error);});
         }); // app.get - list resource
 
         // register single resource
         url = mapping.type + '/:guid';
-        app.use(url, checkBasicAuthentication);
+        if(!mapping.public) {
+            app.use(url, checkBasicAuthentication);
+        }
         app.get(url, function(req, resp) {
+            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
@@ -391,8 +530,11 @@ function rest2pg(config) {
 
         // register PUT operation for inserts and updates
         url = mapping.type + '/:guid';
-        app.use(url, checkBasicAuthentication);
+        if(!mapping.public) {
+            app.use(url, checkBasicAuthentication);
+        }
         app.put(url, function(req, resp) {
+            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
@@ -403,6 +545,15 @@ function rest2pg(config) {
             var start = Date.now();
             console.log("PUT " + mapping.type + "/" + req.params.guid);
             console.log(element);
+
+            if(mapping.schema) {
+                var error = rest2pg_utils.getSchemaValidationErrors(element, mapping.schema);
+                if(error) {
+                    cl("Schema validation failed. Returning 409 Conflict with errors to client.");
+                    resp.status(409).send(error);
+                    return;
+                }
+            }
 
             // check and remove types from references.
             for (var key in mapping.map) {
@@ -445,7 +596,7 @@ function rest2pg(config) {
                     execSQL(update, function(results) {
                         if(mapping.afterput) mapping.afterinsert(element);
                         resp.send("");
-                    });
+                    }, function(error) {resp.status(500).send(error);});
                 } else {
                     element.guid = req.params.guid;
                     for (var key in mapping.map) {
@@ -463,9 +614,9 @@ function rest2pg(config) {
                     execSQL(insert, function (results) {
                         if(mapping.afterput) mapping.afterinsert(element);
                         resp.send("");
-                    });
+                    }, function(error) {resp.status(500).send(error);});
                 }
-            });
+            }, function(error) {resp.status(500).send(error);});
         });
     }
 }
@@ -495,7 +646,7 @@ app.get('/me', function(req,resp) {
             output.$$meta.permalink = '/persons/' + row.guid;
             rest2pg_utils.mapColumnsToObject(mapping, row, output);
             resp.send(output);
-        });
+        }, function(error) {resp.status(500).send(error);});
     }
 });
 

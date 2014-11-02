@@ -1,35 +1,36 @@
-var app = angular.module('elasApp', ['ngRoute','angular-flexslider', 'notifications','base64','angular-loading-bar']);
+var app = angular.module('elasApp', ['ngRoute', 'notifications','base64','angular-loading-bar']);
+
+app.directive('ngFocus', [function() {
+    var FOCUS_CLASS = "ng-focused";
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function(scope, element, attrs, ctrl) {
+            ctrl.$focused = false;
+            element.bind('focus', function(evt) {
+                element.addClass(FOCUS_CLASS);
+                scope.$apply(function() {ctrl.$focused = true;});
+            }).bind('blur', function(evt) {
+                element.removeClass(FOCUS_CLASS);
+                scope.$apply(function() {ctrl.$focused = false;});
+            });
+        }
+    }
+}]);
 
 app.controller('elasController', function ($scope, $base64, $http, $location) {
-    $scope.flexSlides = [];
-    $scope.flexSlides.push({
-        image : "img/photos/1.jpg",
-        title : "Gemeenschapsmunt",
-        para : "Korte beschrijving..."
-    });
-    $scope.flexSlides.push({
-        image : "img/photos/2.jpg",
-        title : "Informatie",
-        para : "Even kort toelichten..."
-    });
-    $scope.flexSlides.push({
-        image : "img/photos/3.jpg",
-        title : "Titel",
-        para : "..."
-    });
-
     $scope.authenticated = function() {
         var authentication = $http.defaults.headers.common.Authorization;
         if(authentication && authentication.indexOf("Basic ") == 0) {
             return true;
         }
         return false;
-    }
+    };
 
     $scope.logout = function() {
         delete $http.defaults.headers.common.Authorization;
         $location.path("/");
-    }
+    };
 });
 
 app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend, $location) {
@@ -120,7 +121,39 @@ app.controller('elasLoginController', function ($scope, $http, $base64, $locatio
     }
 });
 
-app.controller('elasRegisterNewCommunityController', function ($scope, $http, $base64, $location) {
+app.controller('elasRegisterNewCommunityController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
+    $scope.community = {};
+    $scope.save = function(formname) {
+        console.log($scope.community);
+        elasBackend.createResource('communities', $scope.community)
+            .then(function ok(resp) {
+                var cache = $cacheFactory.get('$http');
+                cache.removeAll();
+                $scope.community = {};
+                $scope.saved = true;
+                $scope[formname].$setPristine();
+            }, function failed(err) {
+                console.log(err);
+            });
+    };
+
+    $scope.errClass = function(formname,fieldname) {
+        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        if(hasError) {
+            return 'has-error';
+        } else {
+            return '';
+        }
+    }
+
+    $scope.errShow = function(formname,fieldname) {
+        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        if(hasError) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 });
 
 app.controller('elasNewMessageController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {

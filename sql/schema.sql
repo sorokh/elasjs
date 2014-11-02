@@ -2,12 +2,10 @@ DROP TABLE IF EXISTS "messages";
 DROP TABLE IF EXISTS "transactions";
 DROP TABLE IF EXISTS "persons";
 DROP TABLE IF EXISTS "communities";
-DROP TABLE IF EXISTS "groups";
 
 CREATE TABLE "communities" (
   "guid" character varying(36) unique,
   "name" character varying(256) unique,
-  "facebook" character varying(256) unique,
   "street" character varying(256) not null,
   "streetnumber" character varying(16) not null,
   "streetbus" character varying(16),
@@ -17,6 +15,7 @@ CREATE TABLE "communities" (
   "email" character varying(32) not null,
   "adminpassword" character varying(64) not null,
   "website" character varying(128),
+  "facebook" character varying(256) unique,
   "currencyname" character varying(32) not null
 );
 
