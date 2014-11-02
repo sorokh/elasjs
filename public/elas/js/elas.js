@@ -1,4 +1,4 @@
-var app = angular.module('elasApp', ['ngRoute', 'notifications','base64','angular-loading-bar']);
+var app = angular.module('elasApp', ['ngRoute', 'notifications','base64','angular-loading-bar','ui.select']);
 
 app.directive('ngFocus', [function() {
     var FOCUS_CLASS = "ng-focused";
@@ -38,6 +38,18 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
         $location.path("/");
         return;
     }
+
+    elasBackend.getListResourcePaged("/persons", {
+        communities: $scope.me.community.href,
+        orderby: 'firstname,lastname',
+        descending: false
+    }).then(function(persons) {
+        var names = [];
+        for(var i=0; i<persons.length; i++) {
+            names.push(persons[i].firstname + ' ' + persons[i].lastname);
+        }
+        $scope.names = names;
+    });
 
     elasBackend.getListResourcePaged('/messages', {
         communities: $scope.me.community.href,
@@ -168,12 +180,112 @@ app.controller('elasNewMessageController', function ($scope, $http, $base64, $lo
         if($scope[formname].$valid) {
             $scope.message.person = { href: $scope.me.$$meta.permalink };
             $scope.message.community = $scope.me.community;
-            console.log($scope.message);
             elasBackend.createResource('messages', $scope.message)
                 .then(function ok(resp) {
                     var cache = $cacheFactory.get('$http');
                     cache.removeAll();
                     $location.path("/messages.html");
+                }, function failed(err) {
+                    console.log(err);
+                });
+        }
+    }
+
+    $scope.errClass = function(formname,fieldname) {
+        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        if(hasError) {
+            return 'has-error';
+        } else {
+            return '';
+        }
+    }
+
+    $scope.errShow = function(formname,fieldname) {
+        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        if(hasError) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+});
+
+app.filter('propsFilter', function() {
+    return function(items, props) {
+        var out = [];
+
+        if (angular.isArray(items)) {
+            items.forEach(function(item) {
+                var itemMatches = false;
+
+                var keys = Object.keys(props);
+                for (var i = 0; i < keys.length; i++) {
+                    var prop = keys[i];
+                    var text = props[prop].toLowerCase();
+                    if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
+                        itemMatches = true;
+                        break;
+                    }
+                }
+
+                if (itemMatches) {
+                    out.push(item);
+                }
+            });
+        } else {
+            // Let the output be the input untouched
+            out = items;
+        }
+
+        return out;
+    }
+});
+
+app.controller('elasNewTransactionController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
+    if(!$scope.authenticated()) {
+        $location.path("/");
+        return;
+    }
+
+    $scope.person = {};
+    /*$scope.people = [
+        { name: 'Adam',      email: 'adam@email.com',      age: 10 },
+        { name: 'Amalie',    email: 'amalie@email.com',    age: 12 },
+        { name: 'Wladimir',  email: 'wladimir@email.com',  age: 30 },
+        { name: 'Samantha',  email: 'samantha@email.com',  age: 31 },
+        { name: 'Estefanía', email: 'estefanía@email.com', age: 16 },
+        { name: 'Natasha',   email: 'natasha@email.com',   age: 54 },
+        { name: 'Nicole',    email: 'nicole@email.com',    age: 43 },
+        { name: 'Adrian',    email: 'adrian@email.com',    age: 21 }
+    ];*/
+    elasBackend.getListResourcePaged("/persons", {
+        communities: $scope.me.community.href,
+        orderby: 'firstname,lastname',
+        descending: false
+    }).then(function(persons) {
+        $scope.people = persons.results;
+        for(var i=0; i<$scope.people.length; i++) {
+            var current = $scope.people[i];
+            if(current.$$meta.permalink === $scope.me.$$meta.permalink) {
+                $scope.people.splice(i,1);
+                break;
+            }
+        }
+        console.log(persons);
+    });
+
+    $scope.transaction = { fromperson: {}, toperson: {} };
+
+    $scope.create = function(formname) {
+        if($scope[formname].$valid) {
+            $scope.transaction.fromperson = { href: $scope.me.$$meta.permalink };
+            $scope.transaction.toperson = { href: $scope.person.selected.$$meta.permalink };
+            console.log($scope.transaction);
+            elasBackend.createResource('transactions', $scope.transaction)
+                .then(function ok(resp) {
+                    var cache = $cacheFactory.get('$http');
+                    cache.removeAll();
+                    $location.path("/transactions.html");
                 }, function failed(err) {
                     console.log(err);
                 });
@@ -228,6 +340,10 @@ app.config(['$routeProvider',
             when('/new_message.html', {
                 templateUrl: 'new_message.html',
                 controller: 'elasNewMessageController'
+            }).
+            when('/new_transaction.html', {
+                templateUrl: 'new_transaction.html',
+                controller: 'elasNewTransactionController'
             }).
             otherwise({
                 redirectTo: '/#/'

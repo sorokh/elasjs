@@ -1,0 +1,62 @@
+<div class="row">
+    <div class="col-md-12">
+        <h3>Nieuwe Waardering</h3>
+        <hr/>
+        <div class="form">
+            <form class="form-horizontal" name="nt">
+                <div class="form-group">
+                    <label class="control-label col-md-3">Persoon *</label>
+
+                    <div class="col-md-9">
+                        <ui-select ng-model="person.selected" theme="bootstrap" style="min-width: 300px;">
+                            <ui-select-match placeholder="Wie wil je waarderen ?  Geef (een deel van) de naam in.">{{$select.selected.firstname}} {{$select.selected.lastname}}</ui-select-match>
+                            <ui-select-choices repeat="person in people | propsFilter: {firstname: $select.search, lastname: $select.search, email: $select.search}">
+                                {{person.firstname}} {{person.lastname}}<br>
+                                <small>
+                                    E-mail: {{person.email}}
+                                    Stand: {{person.balance}}
+                                </small>
+                            </ui-select-choices>
+                        </ui-select>
+                        <!--
+                        <input type="text" auto-complete ui-items="names" class="form-control" id="toperson" name="toperson" placeholder="Wie wil je waarderen ? Geef (een deel van) de naam in."
+                               ng-model="toperson" required ng-focus>
+                        <span class="help-block" ng-show="errShow('nt','toperson')">Selecteer de persoon die je wil waarderen.</span>-->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="description">Beschrijving *</label>
+
+                    <div class="col-md-9" ng-class="errClass('nt','description')">
+                        <input type="text" class="form-control" id="description" name="description" placeholder=""
+                               ng-model="transaction.description" required ng-focus ng-maxlength="256" ng-minlength="1">
+                        <span class="help-block" ng-show="errShow('nt','description')">Gelieve een korte beschrijving in te geven. (max. 256 karakters)</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="amount">Punten *</label>
+
+                    <div class="col-md-1" ng-class="errClass('nt','amount')">
+                        <input type="text" class="form-control" id="amount" name="amount" placeholder=""
+                               ng-model="transaction.amount" ng-focus ng-pattern="/^[0-9]*$/" required>
+                        <span class="help-block" ng-show="errShow('nt','amount')">Geen getal.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-12 text-right">
+                        <span ng-show="!nt.$valid">Er zijn fouten in het formulier.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12 text-right">
+                        <a class="btn btn-primary" ng-click="create('nt')">Opslaan</a>
+                        <a href="#/messages.html" class="btn btn-default">Annuleren</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -261,7 +261,10 @@ var config = [
         type: "/transactions",
         public: false,
         map: {
-            transactiontimestamp: {},
+            transactiontimestamp: {
+                onInsert: function(input) { return new Date().toISOString(); },
+                onUpdate: function(input) { return new Date().toISOString(); }
+            },
             fromperson: {references: '/persons'},
             toperson: {references: '/persons'},
             description: {},
