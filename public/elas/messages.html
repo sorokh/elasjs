@@ -1,20 +1,21 @@
-
+<div class="row">
+    <div class="col-md-12">
+        <div class="hero">
+            <h3><span>Recent Vraag & Aanbod</span></h3>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-8">
+        <input id="search" type="text" class="form-control" ng-model="messagesFilter"
+               placeholder="Zoekterm. Bvb. Losse term, naam van plaatser, datum plaatsing, vraag/aanbod, ... ">
+    </div>
+    <div class="col-md-4 text-right">
+        <a href="#/new_message.html" class="btn btn-primary">Nieuw bericht ingeven</a>
+    </div>
+</div>
 
 <div class="blog">
-    <div class="row posts">
-        <div class="col-md-12">
-            <h1>Recent Vraag en Aanbod</h1>
-        </div>
-    </div>
-    <div class="row posts">
-        <div class="col-md-8">
-            <input id="search" type="text" class="form-control" placeholder="Zoekterm. Bvb. Losse term, naam van plaatser, datum plaatsing, vraag/aanbod, ... " ng-model="messagesFilter">
-        </div>
-        <div class="col-md-4 text-right">
-            <a href="#/new_message.html" class="btn btn-primary">Nieuw bericht ingeven</a>
-        </div>
-    </div>
-
     <div class="row">
         <div class="col-md-12">
             <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
@@ -38,14 +39,14 @@
                     </p>
                 </div>
             </div>
-            <!-- Pagination -->
+            <!-- Pagination
             <div class="paging">
                 <span class='current'>1</span>
                 <a href='#'>2</a>
                 <span class="dots">&hellip;</span>
                 <a href='#'>6</a>
                 <a href="#">Volgende</a>
-            </div>
+            </div>-->
 
             <div class="clearfix"></div>
         </div>

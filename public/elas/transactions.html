@@ -1,12 +1,20 @@
 <div class="row">
-    <div class="col-md-8">
-
-        <h1>Recente Transacties</h1>
-    </div>
-    <div class="col-md-4 text-right">
-        Zoeken <input width="200" ng-model="transactionsFilter">
+    <div class="col-md-12">
+        <div class="hero">
+            <h3><span>Recente Transacties</span></h3>
+        </div>
     </div>
 </div>
+<div class="row">
+    <div class="col-md-8">
+        <input id="search" type="text" class="form-control" ng-model="transactionsFilter"
+               placeholder="Zoekterm. Beschrijving, Naam van lid, ...">
+    </div>
+    <div class="col-md-4 text-right">
+        <a href="#" class="btn btn-primary">Nieuwe transactie ingeven</a>
+    </div>
+</div>
+        &nbsp;
 <div class="blog">
     <div class="row">
         <div class="posts" ng-repeat="transaction in transactions | filter:transactionsFilter">
@@ -24,14 +32,14 @@
             </div>
         </div>
         <div class="col-md-12">
-            <!-- Pagination -->
+            <!-- Pagination
             <div class="paging">
                 <span class='current'>1</span>
                 <a href='#'>2</a>
                 <span class="dots">&hellip;</span>
                 <a href='#'>6</a>
                 <a href="#">Volgende</a>
-            </div>
+            </div>-->
 
             <div class="clearfix"></div>
         </div>
