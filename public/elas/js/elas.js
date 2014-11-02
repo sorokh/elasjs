@@ -164,18 +164,38 @@ app.controller('elasNewMessageController', function ($scope, $http, $base64, $lo
 
     $scope.message = {};
 
-    $scope.create = function() {
-        $scope.message.person = { href: $scope.me.$$meta.permalink };
-        $scope.message.community = $scope.me.community;
-        console.log($scope.message);
-        elasBackend.createResource('messages', $scope.message)
-            .then(function ok(resp) {
-                var cache = $cacheFactory.get('$http');
-                cache.removeAll();
-                $location.path("/messages.html");
-            }, function failed(err) {
-                console.log(err);
-            });
+    $scope.create = function(formname) {
+        if($scope[formname].$valid) {
+            $scope.message.person = { href: $scope.me.$$meta.permalink };
+            $scope.message.community = $scope.me.community;
+            console.log($scope.message);
+            elasBackend.createResource('messages', $scope.message)
+                .then(function ok(resp) {
+                    var cache = $cacheFactory.get('$http');
+                    cache.removeAll();
+                    $location.path("/messages.html");
+                }, function failed(err) {
+                    console.log(err);
+                });
+        }
+    }
+
+    $scope.errClass = function(formname,fieldname) {
+        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        if(hasError) {
+            return 'has-error';
+        } else {
+            return '';
+        }
+    }
+
+    $scope.errShow = function(formname,fieldname) {
+        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        if(hasError) {
+            return true;
+        } else {
+            return false;
+        }
     }
 });
 
