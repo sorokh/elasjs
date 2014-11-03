@@ -8,6 +8,9 @@ var Q = require("q");
 
 var app = express();
 
+//var logsql = true;
+var logsql = false;
+
 app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.json());
 
@@ -27,6 +30,18 @@ var forceSecure = function(req, res, next) {
 app.use(forceSecure);
 
 app.use(express.static(__dirname + '/public/'));
+
+// logging on API calls.
+app.use(function(req, res, next) {
+    cl(req.method + " " + req.url + " starting.");
+    var start = Date.now();
+    res.on('finish', function() {
+        var duration = Date.now() - start;
+        cl(req.method + " took "  + duration + " ms. " + req.url);
+    });
+    next();
+});
+
 
 var knownPasswords = {};
 
@@ -52,38 +67,27 @@ var checkBasicAuthentication = function(req, res, next) {
                         next();
                     } else forbidden();
                 } else {
-                    pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
+                    pgConnect().then(function(db) {
                         var q = bits.SQL('select count(*) FROM persons');
                         q.WHERE('email = ', bits.$(email), bits.AND, 'password = ', bits.$(password));
-
-                        cl(q.sql);
-                        client.query(q.sql, q.params, function(err, result) {
-                            done();
-                            if (err) {
-                                cl(err);
-                                forbidden();
+                        return pgExec(db,q).then(function(result) {
+                            var count = parseInt(result.rows[0].count);
+                            if(count == 1) {
+                                // Found matching record, add to cache for subsequent requests.
+                                knownPasswords[email] = password;
+                                next();
                             } else {
-                                var count = parseInt(result.rows[0].count);
-                                cl(count);
-                                if(count == 1) {
-                                    // Found matching record, add to cache for subsequent requests.
-                                    knownPasswords[email] = password;
-                                    next();
-                                } else {
-                                    cl("Wrong combination of email / password. Found " + count + " records.");
-                                    forbidden();
-                                }
+                                cl("Wrong combination of email / password. Found " + count + " records.");
+                                forbidden();
                             }
-
                         });
-                    });
+                    })
+                    .fail(function() {forbidden();})
+                    .fin(function() {resp.end()});
                 }
             } else forbidden();
         } else forbidden();
-    } else {
-        cl("No Authorization header detected.");
-        forbidden();
-    }
+    } else forbidden();
 };
 
 var filterOnCommunities = function(value, select) {
@@ -115,6 +119,10 @@ var filterOnCommunities = function(value, select) {
             return;
         }
     }
+};
+
+var validateCommunities = function(req, resp, elasBackend) {
+
 };
 
 var config = [
@@ -172,7 +180,7 @@ var config = [
     },
     {
         type: "/communities",
-        public: true,
+        public: true, // remove authorisation check.
         map: {
             name: {},
             street: {},
@@ -255,7 +263,8 @@ var config = [
                 maxLength: 32
             },
             required: ["name","street","streetnumber","zipcode","city", "phone","email", "adminpassword","currencyname"]
-        }
+        },
+        validate : validateCommunities
     },
     {
         type: "/transactions",
@@ -274,29 +283,53 @@ var config = [
     }
 ];
 
-var execSQL = function(bitsquery, success, failure) {
-    var sql = bitsquery.sql;
-    var params = bitsquery.params;
+var pgConnect = function() {
+    var deferred = Q.defer();
 
     pg.connect(process.env.DATABASE_URL + "?ssl=true", function(err, client, done) {
         if(err) {
-            cl("Error opening database connection..");
-            return;
+            deferred.reject(err);
+        } else {
+            deferred.resolve({
+                client: client,
+                done: done
+            });
         }
-
-        client.query(sql, params, function(err, result) {
-            done();
-            if (err) {
-                console.log("Unable to execute SQL [" + sql + "]");
-                console.log(params);
-                console.log(err);
-                if(failure) failure(err);
-                return;
-            }
-
-            success(result);
-        });
     });
+
+    return deferred.promise;
+};
+
+var pgExec = function(db, bitsquery) {
+    var deferred = Q.defer();
+
+    var sql = bitsquery.sql;
+    var params = bitsquery.params;
+
+    if(logsql) {
+        cl("sql : " + sql);
+        cl("parameters : ");
+        cl(params);
+    }
+
+    db.client.query(sql, params, function(err, result) {
+        db.done();
+        if (err) {
+            if(logsql) {
+                cl("sql error");
+                cl(err);
+            }
+            deferred.reject(err);
+        } else {
+            if(logsql) {
+                cl("sql result : ");
+                cl(result.rows);
+            }
+            deferred.resolve(result);
+        }
+    });
+
+    return deferred.promise;
 };
 
 var rest2pg_utils = {
@@ -366,19 +399,18 @@ var rest2pg_utils = {
         }
     },
 
-    queryByGuid : function(mapping, guid, success) {
+    queryByGuid : function(db, mapping, guid) {
         var columns = rest2pg_utils.sqlColumnNames(mapping);
         var table = mapping.type.split("/")[1];
 
         var query = bits.SQL('select ' + columns + ' FROM "' + table + '"');
         query.WHERE('"guid" = ', bits.$(guid));
 
-        execSQL(query, function(result) {
+        return pgExec(db,query).then(function(result) {
             var row=result.rows[0];
             var output = {};
-
             rest2pg_utils.mapColumnsToObject(mapping, row, output);
-            if(success) success(output);
+            return output;
         });
     },
 
@@ -411,6 +443,20 @@ var rest2pg_utils = {
     }
 }
 
+function send500(resp) {
+    return function(error) {
+        cl("Error. Sending status 500.");
+        cl(error);
+        resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
+    };
+}
+
+function endResponse(resp) {
+    return function() {
+        resp.end();
+    };
+}
+
 function rest2pg(config) {
     for(var configIndex = 0; configIndex < config.length; configIndex++) {
         var mapping = config[configIndex];
@@ -421,12 +467,11 @@ function rest2pg(config) {
         // register schema for external usage. public.
         url = mapping.type + '/schema';
         app.get(url, function(req, resp) {
-            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
-            cl("GET " + mapping.type + "/schema");
 
+            resp.set('Content-Type', 'application/json');
             resp.send(mapping.schema);
         });
 
@@ -436,79 +481,78 @@ function rest2pg(config) {
             app.use(url, checkBasicAuthentication);
         }
         app.get(url , function(req, resp) {
-            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
             var columns = rest2pg_utils.sqlColumnNames(mapping);
             var table = mapping.type.split("/")[1];
 
-            var start = Date.now();
-            console.log("GET " + mapping.type);
-
             var countquery = SQL('select count(*) FROM "' + table + '"');
             rest2pg_utils.applyRequestParameters(mapping, req, countquery);
-            execSQL(countquery, function(results) {
-                var count = parseInt(results.rows[0].count);
-                var query = SQL('select ' + columns + ' FROM "' + table + '"');
-                rest2pg_utils.applyRequestParameters(mapping, req, query);
+            pgConnect().then(function(db) {
+                return pgExec(db,countquery).then(function (results) {
+                    var count = parseInt(results.rows[0].count);
+                    var query = SQL('select ' + columns + ' FROM "' + table + '"');
+                    rest2pg_utils.applyRequestParameters(mapping, req, query);
 
-                // All list resources support orderby, limit and offset.
-                var orderby = req.query.orderby;
-                var descending = req.query.descending;
-                if(orderby) {
-                    var valid = true;
-                    var orders = orderby.split(",");
-                    for(var o=0; o<orders.length; o++) {
-                        var order = orders[o];
-                        if(!mapping.map[order]) {
-                            valid=false;
-                            break;
-                        }
-                    }
-                    if(valid) {
-                        query._("ORDER BY " + orders);
-                        if(descending) query._("DESC");
-                    } else {
-                        cl("Can not order by [" + orderby + "]. One or more unknown properties. Ignoring orderby.");
-                    }
-                }
-
-                if(req.query.limit) query.LIMIT(req.query.limit);
-                if(req.query.offset) query.OFFSET(req.query.offset);
-
-                cl(query.sql);
-                cl(query.params);
-                execSQL(query, function(result) {
-                    var rows=result.rows;
-                    var results = [];
-                    for(var row=0; row<rows.length; row++) {
-                        var currentrow = rows[row];
-
-                        var element = {
-                            href: mapping.type + '/' + currentrow.guid
-                        };
-
-                        if(req.query.expand !== 'full') {
-                            element.$$expanded = {
-                                $$meta : {
-                                    permalink: mapping.type + '/' + currentrow.guid
-                                }
+                    // All list resources support orderby, limit and offset.
+                    var orderby = req.query.orderby;
+                    var descending = req.query.descending;
+                    if (orderby) {
+                        var valid = true;
+                        var orders = orderby.split(",");
+                        for (var o = 0; o < orders.length; o++) {
+                            var order = orders[o];
+                            if (!mapping.map[order]) {
+                                valid = false;
+                                break;
                             }
-                            rest2pg_utils.mapColumnsToObject(mapping, currentrow, element.$$expanded);
                         }
-                        results.push(element);
+                        if (valid) {
+                            query._("ORDER BY " + orders);
+                            if (descending) query._("DESC");
+                        } else {
+                            cl("Can not order by [" + orderby + "]. One or more unknown properties. Ignoring orderby.");
+                        }
                     }
 
-                    var output = {
-                        $$meta: {
-                            count: count
-                        },
-                        results : results
-                    };
-                    resp.send(output);
-                }, function(error) {resp.status(500).send(error);});
-            }, function(error) {resp.status(500).send(error);});
+                    if (req.query.limit) query.LIMIT(req.query.limit);
+                    if (req.query.offset) query.OFFSET(req.query.offset);
+
+                    return pgExec(db,query).then(function (result) {
+                        var rows = result.rows;
+                        var results = [];
+                        for (var row = 0; row < rows.length; row++) {
+                            var currentrow = rows[row];
+
+                            var element = {
+                                href: mapping.type + '/' + currentrow.guid
+                            };
+
+                            if (req.query.expand !== 'full') {
+                                element.$$expanded = {
+                                    $$meta: {
+                                        permalink: mapping.type + '/' + currentrow.guid
+                                    }
+                                }
+                                rest2pg_utils.mapColumnsToObject(mapping, currentrow, element.$$expanded);
+                            }
+                            results.push(element);
+                        }
+
+                        var output = {
+                            $$meta: {
+                                count: count
+                            },
+                            results: results
+                        };
+                        resp.set('Content-Type', 'application/json');
+                        resp.send(output);
+                    });
+                });
+            })
+            .fail(send500(resp))
+            .fin(endResponse(resp));
         }); // app.get - list resource
 
         // register single resource
@@ -517,18 +561,20 @@ function rest2pg(config) {
             app.use(url, checkBasicAuthentication);
         }
         app.get(url, function(req, resp) {
-            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
             var guid = req.params.guid;
-            cl("GET " + mapping.type + "/" + req.params.guid);
 
-            rest2pg_utils.queryByGuid(mapping, guid, function(element) {
-                    // success
+            pgConnect().then(function(db) {
+                return rest2pg_utils.queryByGuid(db, mapping, guid).then(function(element) {
                     element.$$meta = { permalink: mapping.type + '/' + guid };
+                    resp.set('Content-Type', 'application/json');
                     resp.send(element);
                 });
+            })
+            .fail(send500(resp))
+            .fin(endResponse(resp));
         });
 
         // register PUT operation for inserts and updates
@@ -537,22 +583,19 @@ function rest2pg(config) {
             app.use(url, checkBasicAuthentication);
         }
         app.put(url, function(req, resp) {
-            resp.set('Content-Type', 'application/json');
             var typeToConfig = rest2pg_utils.typeToConfig(config);
             var type = '/' + req.route.path.split("/")[1];
             var mapping = typeToConfig[type];
             var table = mapping.type.split("/")[1];
 
             var element = req.body;
-
-            var start = Date.now();
-            console.log("PUT " + mapping.type + "/" + req.params.guid);
-            console.log(element);
+            cl(element);
 
             if(mapping.schema) {
                 var error = rest2pg_utils.getSchemaValidationErrors(element, mapping.schema);
                 if(error) {
                     cl("Schema validation failed. Returning 409 Conflict with errors to client.");
+                    resp.set('Content-Type', 'application/json');
                     resp.status(409).send(error);
                     return;
                 }
@@ -579,47 +622,44 @@ function rest2pg(config) {
             }
 
             var countquery = bits.SQL('select count(*) from ' + table).WHERE('"guid" = ', bits.$(req.params.guid));
-            execSQL(countquery, function(results) {
-                if(results.rows[0].count == 1) {
-                    for (var key in mapping.map) {
-                        if (mapping.map.hasOwnProperty(key)) {
-                            if(mapping.map[key].onUpdate) {
-                                var value = element[key];
-                                var translated = mapping.map[key].onUpdate(value);
-                                element[key] = translated;
+            pgConnect().then(function(db) {
+                return pgExec(db,countquery).then(function(results) {
+                    if(results.rows[0].count == 1) {
+                        for (var key in mapping.map) {
+                            if (mapping.map.hasOwnProperty(key)) {
+                                if(mapping.map[key].onUpdate) {
+                                    var value = element[key];
+                                    var translated = mapping.map[key].onUpdate(value);
+                                    element[key] = translated;
+                                }
                             }
                         }
-                    }
 
-                    var update =
-                        bits.UPDATE(table)
-                            .SET(element)
-                            ._('where guid=', $(req.params.guid));
-
-                    execSQL(update, function(results) {
-                        if(mapping.afterput) mapping.afterinsert(element);
-                        resp.send("");
-                    }, function(error) {resp.status(500).send(error);});
-                } else {
-                    element.guid = req.params.guid;
-                    for (var key in mapping.map) {
-                        if (mapping.map.hasOwnProperty(key)) {
-                            if (mapping.map[key].onInsert) {
-                                var value = element[key];
-                                var translated = mapping.map[key].onInsert(value);
-                                element[key] = translated;
+                        var update = bits.UPDATE(table).SET(element)._('where guid=', $(req.params.guid));
+                        return pgExec(db,update).then(function(results) {
+                            if(mapping.afterput) mapping.afterinsert(element);
+                        });
+                    } else {
+                        element.guid = req.params.guid;
+                        for (var key in mapping.map) {
+                            if (mapping.map.hasOwnProperty(key)) {
+                                if (mapping.map[key].onInsert) {
+                                    var value = element[key];
+                                    var translated = mapping.map[key].onInsert(value);
+                                    element[key] = translated;
+                                }
                             }
                         }
-                    }
 
-                    var insert =
-                        bits.INSERT.INTO(table, element);
-                    execSQL(insert, function (results) {
-                        if(mapping.afterput) mapping.afterinsert(element);
-                        resp.send("");
-                    }, function(error) {resp.status(500).send(error);});
-                }
-            }, function(error) {resp.status(500).send(error);});
+                        var insert = bits.INSERT.INTO(table, element);
+                        return pgExec(db,insert).then(function (results) {
+                            if(mapping.afterput) mapping.afterinsert(element);
+                        });
+                    }
+                });
+            })
+            .fail(send500(resp))
+            .fin(endResponse(resp))
         });
     }
 }
@@ -642,14 +682,19 @@ app.get('/me', function(req,resp) {
         var query = bits.SQL('select ' + columns + ',guid FROM ' + table);
         query.WHERE('email = ', bits.$(email));
 
-        execSQL(query, function(result) {
-            var row=result.rows[0];
-            var output = {};
-            output.$$meta = {};
-            output.$$meta.permalink = '/persons/' + row.guid;
-            rest2pg_utils.mapColumnsToObject(mapping, row, output);
-            resp.send(output);
-        }, function(error) {resp.status(500).send(error);});
+        pgConnect().then(function(db) {
+            return pgExec(db,query).then(function(result) {
+                var row=result.rows[0];
+                var output = {};
+                output.$$meta = {};
+                output.$$meta.permalink = '/persons/' + row.guid;
+                rest2pg_utils.mapColumnsToObject(mapping, row, output);
+                resp.set('Content-Type', 'application/json');
+                resp.send(output);
+            });
+        })
+        .fail(send500(resp))
+        .fin(endResponse(resp));
     }
 });
 
