@@ -9,12 +9,12 @@ CREATE TABLE "communities" (
   "street" character varying(256) not null,
   "streetnumber" character varying(16) not null,
   "streetbus" character varying(16),
-  "zipcode" character varying(16) not null,
+  "zipcode" character varying(4) not null,
   "city" character varying(64) not null,
   "phone" character varying(32),
   "email" character varying(32) not null,
   "adminpassword" character varying(64) not null,
-  "website" character varying(128),
+  "website" character varying(256),
   "facebook" character varying(256) unique,
   "currencyname" character varying(32) not null
 );
@@ -26,7 +26,7 @@ CREATE TABLE "persons" (
   "street" character varying(256),
   "streetnumber" character varying(16),
   "streetbus" character varying(16),
-  "zipcode" character varying(16),
+  "zipcode" character varying(4),
   "city" character varying(64),
   "phone" character varying(32),
   "email" character varying(32) unique,

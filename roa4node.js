@@ -128,6 +128,16 @@ function applyRequestParameters(mapping, req, select) {
     }
 }
 
+function executeOnFunctions(config, mapping, ontype, element) {
+    for (var key in mapping.map) {
+        if (mapping.map.hasOwnProperty(key)) {
+            if (mapping.map[key][ontype]) {
+                mapping.map[key][ontype](key, element);
+            }
+        }
+    }
+}
+
 function queryByGuid(config, db, mapping, guid) {
     var columns = sqlColumnNames(mapping);
     var table = mapping.type.split("/")[1];
@@ -139,6 +149,7 @@ function queryByGuid(config, db, mapping, guid) {
         var row = result.rows[0];
         var output = {};
         mapColumnsToObject(config, mapping, row, output);
+        executeOnFunctions(config, mapping, "onread", output);
         return output;
     });
 }
@@ -345,8 +356,9 @@ exports = module.exports = {
                                         $$meta: {
                                             permalink: mapping.type + '/' + currentrow.guid
                                         }
-                                    }
+                                    };
                                     mapColumnsToObject(resources, mapping, currentrow, element.$$expanded);
+                                    executeOnFunctions(resources, mapping, "onread", element.$$expanded);
                                 }
                                 results.push(element);
                             }
@@ -409,6 +421,8 @@ exports = module.exports = {
                         resp.set('Content-Type', 'application/json');
                         resp.status(409).send(error);
                         return;
+                    } else {
+                        cl("Schema validation passed.");
                     }
                 }
 
@@ -436,35 +450,19 @@ exports = module.exports = {
                 pgConnect().then(function (db) {
                     return pgExec(db, countquery).then(function (results) {
                         if (results.rows[0].count == 1) {
-                            for (var key in mapping.map) {
-                                if (mapping.map.hasOwnProperty(key)) {
-                                    if (mapping.map[key].onUpdate) {
-                                        var value = element[key];
-                                        var translated = mapping.map[key].onUpdate(value);
-                                        element[key] = translated;
-                                    }
-                                }
-                            }
+                            executeOnFunctions(resources, mapping, "onupdate", element);
 
                             var update = UPDATE(table).SET(element)._('where guid=', $(req.params.guid));
                             return pgExec(db, update).then(function (results) {
-                                if (mapping.afterput) mapping.afterinsert(element);
+                                if (mapping.afterupdate) mapping.afterupdate(element);
                             });
                         } else {
                             element.guid = req.params.guid;
-                            for (var key in mapping.map) {
-                                if (mapping.map.hasOwnProperty(key)) {
-                                    if (mapping.map[key].onInsert) {
-                                        var value = element[key];
-                                        var translated = mapping.map[key].onInsert(value);
-                                        element[key] = translated;
-                                    }
-                                }
-                            }
+                            executeOnFunctions(resources, mapping, "oninsert", element);
 
                             var insert = INSERT.INTO(table, element);
                             return pgExec(db, insert).then(function (results) {
-                                if (mapping.afterput) mapping.afterinsert(element);
+                                if (mapping.afterinsert) mapping.afterinsert(element);
                             });
                         }
                     });
@@ -510,5 +508,42 @@ exports = module.exports = {
     // Call this is you want to clear the passwords cache for the API.
     clearPasswordCache : function() {
         knownPasswords = {};
+    },
+
+    onread : {
+        removeifnull : function(key, e) {
+            if(e[key] == null) delete e[key];
+        },
+        remove : function(key, e) {
+            delete e[key];
+        }
+    },
+
+    onupdate : {
+        remove : function(key, e) {
+            delete e[key];
+        },
+        now : function(key, e) {
+            e[key] = new Date().toISOString();
+        },
+        value : function(value) {
+            return function(key, e) {
+                e[key] = value;
+            }
+        }
+    },
+
+    oninsert : {
+        remove : function(key, e) {
+            delete e[key];
+        },
+        now : function(key, e) {
+            e[key] = new Date().toISOString();
+        },
+        value : function(value) {
+            return function(key, e) {
+                e[key] = value;
+            }
+        }
     }
 }
