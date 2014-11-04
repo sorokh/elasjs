@@ -4,8 +4,11 @@ var bodyParser = require('body-parser');
 var Q = require("q");
 
 // Local includes
-var rest = require("./roa4node.js");
-var valid = require("./schema-utils.js");
+var roa = require("./roa4node.js");
+var oninsert = oninsert;
+var onupdate = onupdate;
+var onread = onread;
+var schema = schema;
 
 var app = express();
 app.set('port', (process.env.PORT || 5000));
@@ -50,7 +53,7 @@ var filterOnCommunities = function(value, select) {
 var validateCommunities = function(req, resp, elasBackend) {
 };
 
-rest.configure(app,
+roa.configure(app,
     {
         logsql : true,
         resources : [
@@ -80,14 +83,14 @@ rest.configure(app,
                     lastname: {},
                     street: {},
                     streetnumber: {},
-                    streetbus: { onread: rest.onread.removeifnull },
+                    streetbus: { onread: onread.removeifnull },
                     zipcode: {},
                     city: {},
-                    phone: { onread: rest.onread.removeifnull },
-                    email: { onread: rest.onread.removeifnull },
+                    phone: { onread: onread.removeifnull },
+                    email: { onread: onread.removeifnull },
                     balance: {
-                        oninsert: rest.oninsert.value(0),
-                        onupdate: rest.onupdate.remove
+                        oninsert: oninsert.value(0),
+                        onupdate: onupdate.remove
                     },
                     community: {references: '/communities'}
                 },
@@ -95,15 +98,15 @@ rest.configure(app,
                 // Validation phase 1 is schema validation.
                 schema: {
                     $schema: "http://json-schema.org/schema#",
-                    firstname: valid.string(1,128),
-                    lastname: valid.string(1,128),
-                    street: valid.string(1,256),
-                    streetnumber: valid.string(1,16),
-                    streetbus: valid.string(1,16),
-                    zipcode: valid.zipcode,
-                    city: valid.string(1,64),
-                    phone: valid.phone,
-                    email: valid.email,
+                    firstname: schema.string(1,128),
+                    lastname: schema.string(1,128),
+                    street: schema.string(1,256),
+                    streetnumber: schema.string(1,16),
+                    streetbus: schema.string(1,16),
+                    zipcode: schema.zipcode,
+                    city: schema.string(1,64),
+                    phone: schema.phone,
+                    email: schema.email,
                     // balance should not be validated. It can never be PUT ! If PUT, it is ignored. See above.
                     required: ["firstname","lastname","street","streetnumber","zipcode","city"]
                 },
@@ -120,7 +123,7 @@ rest.configure(app,
                 },
                 // After any update a hook 'afterupdate' can be registered to perform desired things, like clear a cache, ...
                 afterupdate: function (person) {
-                    rest.clearPasswordCache();
+                    roa.clearPasswordCache();
                 }
             },
             {
@@ -129,29 +132,29 @@ rest.configure(app,
                 map: {
                     person: {references: '/persons'},
                     posted: {
-                        oninsert: rest.oninsert.now,
-                        onupdate: rest.oninsert.now
+                        oninsert: oninsert.now,
+                        onupdate: oninsert.now
                     },
                     type: {},
                     title: {},
-                    description: { onread: rest.onread.removeifnull },
-                    amount: { onread: rest.onread.removeifnull },
-                    unit: { onread: rest.onread.removeifnull },
+                    description: { onread: onread.removeifnull },
+                    amount: { onread: onread.removeifnull },
+                    unit: { onread: onread.removeifnull },
                     community: {references: "/communities"}
                 },
                 schema: {
                     $schema: "http://json-schema.org/schema#",
-                    person: valid.permalink("/persons"),
+                    person: schema.permalink("/persons"),
                     type: {
                         type: "string",
                         description: "Is this message offering something, or is it requesting something ?",
                         enum: ["offer","request"]
                     },
-                    title: valid.string(1,256),
-                    description: valid.string(0,1024),
-                    amount: valid.numeric,
-                    unit: valid.string(0,32),
-                    community: valid.permalink("/communities"),
+                    title: schema.string(1,256),
+                    description: schema.string(0,1024),
+                    amount: schema.numeric,
+                    unit: schema.string(0,32),
+                    community: schema.permalink("/communities"),
                     required: ["person","type","title","community"]
                 },
                 query: {
@@ -165,31 +168,31 @@ rest.configure(app,
                     name: {},
                     street: {},
                     streetnumber: {},
-                    streetbus: { onread: rest.onread.removeifnull },
+                    streetbus: { onread: onread.removeifnull },
                     zipcode: {},
                     city: {},
                     // Only allow create/update to set adminpassword, never show on output.
-                    adminpassword: { onread: rest.onread.remove },
-                    phone: { onread: rest.onread.removeifnull },
+                    adminpassword: { onread: onread.remove },
+                    phone: { onread: onread.removeifnull },
                     email: {},
-                    facebook: { onread: rest.onread.removeifnull },
-                    website: { onread: rest.onread.removeifnull },
+                    facebook: { onread: onread.removeifnull },
+                    website: { onread: onread.removeifnull },
                     currencyname: {}
                 },
                 schema: {
                     $schema: "http://json-schema.org/schema#",
-                    name: valid.string(1,256),
-                    street: valid.string(1,256),
-                    streetnumber: valid.string(1,16),
-                    streetbus: valid.string(1,16),
-                    zipcode: valid.zipcode,
-                    city: valid.string(1,64),
-                    phone: valid.phone,
-                    email: valid.email,
-                    adminpassword: valid.string(5,64),
-                    website: valid.url,
-                    facebook: valid.url,
-                    currencyname: valid.string(1,32),
+                    name: schema.string(1,256),
+                    street: schema.string(1,256),
+                    streetnumber: schema.string(1,16),
+                    streetbus: schema.string(1,16),
+                    zipcode: schema.zipcode,
+                    city: schema.string(1,64),
+                    phone: schema.phone,
+                    email: schema.email,
+                    adminpassword: schema.string(5,64),
+                    website: schema.url,
+                    facebook: schema.url,
+                    currencyname: schema.string(1,32),
                     required: ["name", "street", "streetnumber", "zipcode", "city", "phone", "email", "adminpassword", "currencyname"]
                 },
                 validate: [ validateCommunities ]
@@ -199,8 +202,8 @@ rest.configure(app,
                 public: false,
                 map: {
                     transactiontimestamp: {
-                        oninsert: rest.oninsert.now,
-                        onupdate: rest.onupdate.now
+                        oninsert: oninsert.now,
+                        onupdate: onupdate.now
                     },
                     fromperson: {references: '/persons'},
                     toperson: {references: '/persons'},
@@ -209,11 +212,11 @@ rest.configure(app,
                 },
                 schema: {
                     $schema: "http://json-schema.org/schema#",
-                    transactiontimestamp: valid.timestamp,
-                    fromperson: valid.permalink("/persons"),
-                    toperson: valid.permalink("/persons"),
-                    description: valid.string(1,256),
-                    amount: valid.numeric,
+                    transactiontimestamp: schema.timestamp,
+                    fromperson: schema.permalink("/persons"),
+                    toperson: schema.permalink("/persons"),
+                    description: schema.string(1,256),
+                    amount: schema.numeric,
                     required: ["fromperson","toperson","description","amount"]
                 }
             }
