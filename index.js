@@ -244,7 +244,6 @@ roa.configure(app,
                     required: ["fromperson","toperson","description","amount"]
                 },
                 afterinsert : [
-                    // TODO : inside the running transaction update balance of from and to person.
                     function(db, element) {
                         var bits = db.bits;
                         var amount = element.amount;
