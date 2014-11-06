@@ -22,7 +22,8 @@ var pgConnect = function () {
         } else {
             deferred.resolve({
                 client: client,
-                done: done
+                done: done,
+                bits: bits
             });
         }
     });
@@ -43,10 +44,9 @@ var pgExec = function (db, bitsquery) {
     }
 
     db.client.query(sql, params, function (err, result) {
-        db.done();
         if (err) {
             if (logsql) {
-                cl("sql error");
+                cl("SQL error, removing postgres client from pool.");
                 cl(err);
             }
             deferred.reject(err);
@@ -164,11 +164,18 @@ function getSchemaValidationErrors(json, schema) {
         ret = ret.replace(/ /gmi, ".");
 
         return ret;
-    }
+    };
+
     var v = new validator();
     var result = v.validate(json, schema);
 
     if (result.errors && result.errors.length > 0) {
+        cl("Schema validation revealed errors.");
+        cl(result.errors);
+        cl("JSON schema was : ");
+        cl(schema);
+        cl("Document was : ");
+        cl(json);
         var ret = {};
         ret.errors = [];
         ret.document = json;
@@ -293,8 +300,8 @@ exports = module.exports = {
                 var mapping = typeToMapping[type];
 
                 resp.set('Content-Type', 'application/json');
-                cl(mapping.schema);
-                resp.send(mapping.schema);
+                cl(mapping.schemaUtils);
+                resp.send(mapping.schemaUtils);
             });
 
             // register list resource for this type.
@@ -414,10 +421,10 @@ exports = module.exports = {
                 var element = req.body;
                 cl(element);
 
-                if (mapping.schema) {
-                    var error = getSchemaValidationErrors(element, mapping.schema);
+                if (mapping.schemaUtils) {
+                    var error = getSchemaValidationErrors(element, mapping.schemaUtils);
                     if (error) {
-                        cl("Schema validation failed. Returning 409 Conflict with errors to client.");
+                        cl("Returning 409 Conflict with errors to client.");
                         resp.set('Content-Type', 'application/json');
                         resp.status(409).send(error);
                         return;
@@ -448,28 +455,64 @@ exports = module.exports = {
 
                 var countquery = SQL('select count(*) from ' + table).WHERE('"guid" = ', $(req.params.guid));
                 pgConnect().then(function (db) {
-                    return pgExec(db, countquery).then(function (results) {
-                        if (results.rows[0].count == 1) {
-                            executeOnFunctions(resources, mapping, "onupdate", element);
+                    cl("Connect resolved");
+                    return pgExec(db,SQL("BEGIN")).then(function() {
+                        cl("BEGIN resolved");
+                        return pgExec(db, countquery).then(function (results) {
+                            cl("countquery resolved");
+                            var deferred = Q.defer();
 
-                            var update = UPDATE(table).SET(element)._('where guid=', $(req.params.guid));
-                            return pgExec(db, update).then(function (results) {
-                                if (mapping.afterupdate) mapping.afterupdate(element);
-                            });
-                        } else {
-                            element.guid = req.params.guid;
-                            executeOnFunctions(resources, mapping, "oninsert", element);
+                            if (results.rows[0].count == 1) {
+                                executeOnFunctions(resources, mapping, "onupdate", element);
 
-                            var insert = INSERT.INTO(table, element);
-                            return pgExec(db, insert).then(function (results) {
-                                if (mapping.afterinsert) mapping.afterinsert(element);
+                                var update = UPDATE(table).SET(element)._('where guid=', $(req.params.guid));
+                                return pgExec(db, update).then(function (results) {
+                                    // TODO : Support update.
+                                });
+                            } else {
+                                element.guid = req.params.guid;
+                                executeOnFunctions(resources, mapping, "oninsert", element);
+
+                                var insert = INSERT.INTO(table, element);
+                                return pgExec(db, insert).then(function (results) {
+                                    cl("INSERT resolved");
+                                    if (mapping.afterinsert && mapping.afterinsert.length > 0) {
+                                        if(mapping.afterinsert.length == 1) {
+                                            cl("calling afterinsert method");
+                                            return mapping.afterinsert[0](db,element);
+                                        } else {
+                                            // TODO : Support more than one after* function.
+                                            cl("More than one after* function not supported yet. Ignoring");
+                                        }
+                                    }
+                                });
+                            }
+                        }); // pgExec(db,countquery)...
+                    }) // pgExec(db,SQL("BEGIN")...
+                        .then(function() {
+                            cl("PUT processing went OK. Committing database transaction.");
+                            db.client.query("COMMIT", function(err) {
+                                // If err is defined, client will be removed from pool.
+                                db.done(err);
+                                cl("COMMIT DONE.");
+                                resp.end();
                             });
-                        }
-                    });
-                })
-                    .fail(send500(resp))
-                    .fin(endResponse(resp))
-            });
+                        })
+                        .fail(function(puterr) {
+                            cl("PUT processing failed. Rolling back database transaction. Error was :");
+                            cl(puterr);
+                            db.client.query("ROLLBACK", function(rollbackerr) {
+                                // If err is defined, client will be removed from pool.
+                                db.done(rollbackerr);
+                                cl("ROLLBACK DONE. Sending 500 Internal Server Error. [" + puterr.toString() + "]");
+                                resp.status(500).send("Internal Server Error. [" + puterr.toString() + "]");
+                                resp.end();
+                            });
+                        });
+
+                }); // pgConnect
+
+            }); // app.put
         }
 
         app.use('/me', checkBasicAuthentication);
@@ -505,23 +548,22 @@ exports = module.exports = {
         });
     },
 
-    // Call this is you want to clear the passwords cache for the API.
-    clearPasswordCache : function() {
-        knownPasswords = {};
+    utils: {
+        // Call this is you want to clear the passwords cache for the API.
+        clearPasswordCache : function() {
+            knownPasswords = {};
+        },
+
+        // Utility to run arbitrary SQL in validation, beforeupdate, afterupdate, etc..
+        executeSQL : pgExec
     },
 
-    onread : {
+    mapUtils : {
         removeifnull : function(key, e) {
             if(e[key] == null) delete e[key];
         },
         remove : function(key, e) {
             delete e[key];
-        }
-    },
-
-    onupdate : {
-        remove : function(key, e) {
-            delete e[key];
         },
         now : function(key, e) {
             e[key] = new Date().toISOString();
@@ -533,21 +575,7 @@ exports = module.exports = {
         }
     },
 
-    oninsert : {
-        remove : function(key, e) {
-            delete e[key];
-        },
-        now : function(key, e) {
-            e[key] = new Date().toISOString();
-        },
-        value : function(value) {
-            return function(key, e) {
-                e[key] = value;
-            }
-        }
-    },
-
-    schema : {
+    schemaUtils : {
         permalink: function(type) {
             var parts = type.split("/");
             var name = parts[1];
@@ -557,13 +585,12 @@ exports = module.exports = {
                 properties: {
                     href: {
                         type: "string",
-                        format: "uri",
-                        pattern: "^\/" + name + "\/.*$",
-                        minLength: 45,
-                        maxLength: 45
-                    },
-                    required: ["href"]
-                }
+                        pattern: "^\/" + name + "\/[-0-9a-f].*$",
+                        minLength: name.length + 38,
+                        maxLength: name.length + 38
+                    }
+                },
+                required: ["href"]
             };
         },
 

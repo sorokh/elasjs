@@ -5,10 +5,9 @@ var Q = require("q");
 
 // Local includes
 var roa = require("./roa4node.js");
-var oninsert = oninsert;
-var onupdate = onupdate;
-var onread = onread;
-var schema = schema;
+var $u = roa.utils;
+var $m = roa.mapUtils;
+var $s = roa.schemaUtils;
 
 var app = express();
 app.set('port', (process.env.PORT || 5000));
@@ -83,30 +82,30 @@ roa.configure(app,
                     lastname: {},
                     street: {},
                     streetnumber: {},
-                    streetbus: { onread: onread.removeifnull },
+                    streetbus: { onread: $m.removeifnull },
                     zipcode: {},
                     city: {},
-                    phone: { onread: onread.removeifnull },
-                    email: { onread: onread.removeifnull },
+                    phone: { onread: $m.removeifnull },
+                    email: { onread: $m.removeifnull },
                     balance: {
-                        oninsert: oninsert.value(0),
-                        onupdate: onupdate.remove
+                        oninsert: $m.value(0),
+                        onupdate: $m.remove
                     },
                     community: {references: '/communities'}
                 },
                 // When a PUT operation is executed there are 2 phases of validate.
                 // Validation phase 1 is schema validation.
-                schema: {
+                schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    firstname: schema.string(1,128),
-                    lastname: schema.string(1,128),
-                    street: schema.string(1,256),
-                    streetnumber: schema.string(1,16),
-                    streetbus: schema.string(1,16),
-                    zipcode: schema.zipcode,
-                    city: schema.string(1,64),
-                    phone: schema.phone,
-                    email: schema.email,
+                    firstname: $s.string(1,128),
+                    lastname: $s.string(1,128),
+                    street: $s.string(1,256),
+                    streetnumber: $s.string(1,16),
+                    streetbus: $s.string(1,16),
+                    zipcode: $s.zipcode,
+                    city: $s.string(1,64),
+                    phone: $s.phone,
+                    email: $s.email,
                     // balance should not be validated. It can never be PUT ! If PUT, it is ignored. See above.
                     required: ["firstname","lastname","street","streetnumber","zipcode","city"]
                 },
@@ -118,13 +117,35 @@ roa.configure(app,
                 // This function receives 2 parameters :
                 //  - the value of the request parameter (string)
                 //  - a SQLbits SELECT object.
+                // TODO : Should be inside an bits.AND() construction with default condition (1=1 AND ...)
                 query: {
                     communities: filterOnCommunities
                 },
-                // After any update a hook 'afterupdate' can be registered to perform desired things, like clear a cache, ...
-                afterupdate: function (person) {
-                    roa.clearPasswordCache();
-                }
+                /*
+                Hooks for psot-processing can be registered to perform desired things, like clear a cache,
+                do further processing, etc..
+
+                 - afterupdate
+                 - afterinsert
+
+                These post-processing functions receive 2 arguments:
+
+                 - a 'db' object, that can be used to call roa4node.executeSQL, with a valid SQLbits statement.
+                   This object contains 3 things :
+                    - client : a pg-connect client object
+                    - done : a pg-connect done function
+                    - bits : a reference to SQLbits
+
+                 - the element that was just updated / created.
+
+                 These functions must return a Q promise. When this promise resolves, all executed SQL will
+                 be commited on the database. When this promise fails, all executed SQL (including the original insert
+                 or update triggered by the API call) will be rolled back.
+                */
+                afterupdate: [
+                    function (db, element) { $u.clearPasswordCache(); }
+                ],
+                afterinsert: []
             },
             {
                 type: "/messages",
@@ -132,29 +153,32 @@ roa.configure(app,
                 map: {
                     person: {references: '/persons'},
                     posted: {
-                        oninsert: oninsert.now,
-                        onupdate: oninsert.now
+                        oninsert: $m.now,
+                        onupdate: $m.now
                     },
                     type: {},
                     title: {},
-                    description: { onread: onread.removeifnull },
-                    amount: { onread: onread.removeifnull },
-                    unit: { onread: onread.removeifnull },
+                    description: { onread: $m.removeifnull },
+                    amount: { onread: $m.removeifnull },
+                    unit: { onread: $m.removeifnull },
                     community: {references: "/communities"}
                 },
-                schema: {
+                schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    person: schema.permalink("/persons"),
-                    type: {
-                        type: "string",
-                        description: "Is this message offering something, or is it requesting something ?",
-                        enum: ["offer","request"]
+                    type: "object",
+                    properties : {
+                        person: $s.permalink("/persons"),
+                        type: {
+                            type: "string",
+                            description: "Is this message offering something, or is it requesting something ?",
+                            enum: ["offer","request"]
+                        },
+                        title: $s.string(1,256),
+                        description: $s.string(0,1024),
+                        amount: $s.numeric,
+                        unit: $s.string(0,32),
+                        community: $s.permalink("/communities")
                     },
-                    title: schema.string(1,256),
-                    description: schema.string(0,1024),
-                    amount: schema.numeric,
-                    unit: schema.string(0,32),
-                    community: schema.permalink("/communities"),
                     required: ["person","type","title","community"]
                 },
                 query: {
@@ -168,31 +192,31 @@ roa.configure(app,
                     name: {},
                     street: {},
                     streetnumber: {},
-                    streetbus: { onread: onread.removeifnull },
+                    streetbus: { onread: $m.removeifnull },
                     zipcode: {},
                     city: {},
                     // Only allow create/update to set adminpassword, never show on output.
-                    adminpassword: { onread: onread.remove },
-                    phone: { onread: onread.removeifnull },
+                    adminpassword: { onread: $m.remove },
+                    phone: { onread: $m.removeifnull },
                     email: {},
-                    facebook: { onread: onread.removeifnull },
-                    website: { onread: onread.removeifnull },
+                    facebook: { onread: $m.removeifnull },
+                    website: { onread: $m.removeifnull },
                     currencyname: {}
                 },
-                schema: {
+                schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    name: schema.string(1,256),
-                    street: schema.string(1,256),
-                    streetnumber: schema.string(1,16),
-                    streetbus: schema.string(1,16),
-                    zipcode: schema.zipcode,
-                    city: schema.string(1,64),
-                    phone: schema.phone,
-                    email: schema.email,
-                    adminpassword: schema.string(5,64),
-                    website: schema.url,
-                    facebook: schema.url,
-                    currencyname: schema.string(1,32),
+                    name: $s.string(1,256),
+                    street: $s.string(1,256),
+                    streetnumber: $s.string(1,16),
+                    streetbus: $s.string(1,16),
+                    zipcode: $s.zipcode,
+                    city: $s.string(1,64),
+                    phone: $s.phone,
+                    email: $s.email,
+                    adminpassword: $s.string(5,64),
+                    website: $s.url,
+                    facebook: $s.url,
+                    currencyname: $s.string(1,32),
                     required: ["name", "street", "streetnumber", "zipcode", "city", "phone", "email", "adminpassword", "currencyname"]
                 },
                 validate: [ validateCommunities ]
@@ -202,23 +226,45 @@ roa.configure(app,
                 public: false,
                 map: {
                     transactiontimestamp: {
-                        oninsert: oninsert.now,
-                        onupdate: onupdate.now
+                        oninsert: $m.now,
+                        onupdate: $m.now
                     },
                     fromperson: {references: '/persons'},
                     toperson: {references: '/persons'},
                     description: {},
                     amount: {}
                 },
-                schema: {
+                schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    transactiontimestamp: schema.timestamp,
-                    fromperson: schema.permalink("/persons"),
-                    toperson: schema.permalink("/persons"),
-                    description: schema.string(1,256),
-                    amount: schema.numeric,
+                    transactiontimestamp: $s.timestamp,
+                    fromperson: $s.permalink("/persons"),
+                    toperson: $s.permalink("/persons"),
+                    description: $s.string(1,256),
+                    amount: $s.numeric,
                     required: ["fromperson","toperson","description","amount"]
-                }
+                },
+                afterinsert : [
+                    // TODO : inside the running transaction update balance of from and to person.
+                    function(db, element) {
+                        var bits = db.bits;
+                        var amount = element.amount;
+                        var fromguid = element.fromperson;
+                        var toguid = element.toperson;
+                        var updatefrom = bits.SQL("UPDATE persons SET balance = (balance - ", bits.$(amount), ") where guid = ", bits.$(fromguid));
+                        return $u.executeSQL(db,updatefrom).then(function() {
+                            var updateto = bits.SQL("UPDATE persons SET balance = (balance + ", bits.$(amount), ") where guid = ", bits.$(toguid));
+                            return $u.executeSQL(db,updateto);
+                        });
+                    }
+                ],
+                // TODO : Check if updates are blocked.
+                afterupdate : [
+                    function(db, element) {
+                        var deferred = Q.defer();
+                        deferred.reject("Updates on transactions are not allowed.");
+                        return deferred.promise;
+                    }
+                ]
             }
         ]
     });
