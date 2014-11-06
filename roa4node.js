@@ -455,11 +455,8 @@ exports = module.exports = {
 
                 var countquery = SQL('select count(*) from ' + table).WHERE('"guid" = ', $(req.params.guid));
                 pgConnect().then(function (db) {
-                    cl("Connect resolved");
                     return pgExec(db,SQL("BEGIN")).then(function() {
-                        cl("BEGIN resolved");
                         return pgExec(db, countquery).then(function (results) {
-                            cl("countquery resolved");
                             var deferred = Q.defer();
 
                             if (results.rows[0].count == 1) {
@@ -467,7 +464,14 @@ exports = module.exports = {
 
                                 var update = UPDATE(table).SET(element)._('where guid=', $(req.params.guid));
                                 return pgExec(db, update).then(function (results) {
-                                    // TODO : Support update.
+                                    if (mapping.afterupdate && mapping.afterupdate.length > 0) {
+                                        if(mapping.afterupdate.length == 1) {
+                                            return mapping.afterupdate[0](db,element);
+                                        } else {
+                                            // TODO : Support more than one after* function.
+                                            cl("More than one after* function not supported yet. Ignoring");
+                                        }
+                                    }
                                 });
                             } else {
                                 element.guid = req.params.guid;
@@ -475,10 +479,8 @@ exports = module.exports = {
 
                                 var insert = INSERT.INTO(table, element);
                                 return pgExec(db, insert).then(function (results) {
-                                    cl("INSERT resolved");
                                     if (mapping.afterinsert && mapping.afterinsert.length > 0) {
                                         if(mapping.afterinsert.length == 1) {
-                                            cl("calling afterinsert method");
                                             return mapping.afterinsert[0](db,element);
                                         } else {
                                             // TODO : Support more than one after* function.
