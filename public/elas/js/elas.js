@@ -1,5 +1,9 @@
 var app = angular.module('elasApp', ['ngRoute', 'notifications','base64','angular-loading-bar','ui.select']);
 
+var cl = function(x) {
+    console.log(x);
+}
+
 app.directive('ngFocus', [function() {
     var FOCUS_CLASS = "ng-focused";
     return {
@@ -170,10 +174,19 @@ app.controller('elasNewCommunityController', function ($scope, $http, $base64, $
     }
 });
 
-app.controller('elasNewMessageController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
+app.controller('elasNewMessageController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory, $routeParams) {
     if(!$scope.authenticated()) {
         $location.path("/");
         return;
+    }
+
+    cl($routeParams);
+    $scope.messagePermalink = $routeParams.message;
+
+    if($scope.messagePermalink) {
+        elasBackend.getResource($scope.messagePermalink).then(function(message) {
+            $scope.message = message;
+        });
     }
 
     $scope.message = {};

@@ -22,7 +22,12 @@
             <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
                 <div class="entry">
                     <div class="meta">
-                        <i class="fa fa-calendar"></i> {{message.posted}} <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}} <i class="fa fa-folder-open"></i> <a href="#">Diensten</a></span>
+                        <i class="fa fa-calendar"></i> {{message.posted}} <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}}
+                        <i class="fa fa-folder-open"></i> <a href="#">Diensten</a>
+                        <span class="pull-right">
+                            <a ng-href="#/new_message.html?message={{message.$$meta.permalink}}" ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-primary fa fa-edit"></span></a>
+                            <a ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-primary fa fa-trash-o"></span></a>
+                        </span>
                     </div>
                         <h4>
                             <span ng-show="message.type == 'offer'">(Aanbod) </span>

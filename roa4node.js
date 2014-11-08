@@ -318,7 +318,9 @@ exports = module.exports = {
 
                 var countquery = SQL('select count(*) FROM "' + table + '"');
                 applyRequestParameters(mapping, req, countquery);
+                var database;
                 pgConnect().then(function (db) {
+                    database = db;
                     return pgExec(db, countquery).then(function (results) {
                         var count = parseInt(results.rows[0].count);
                         var query = SQL('select ' + columns + ' FROM "' + table + '"');
@@ -379,10 +381,19 @@ exports = module.exports = {
                             resp.set('Content-Type', 'application/json');
                             resp.send(output);
                         });
-                    });
+                    })
                 })
-                    .fail(send500(resp))
-                    .fin(endResponse(resp));
+                    .then(function() {
+                        database.done();
+                        resp.end();
+                    })
+                    .fail(function(err) {
+                        cl("GET processing had errors. Removing pg client from pool. Error : ");
+                        cl(err);
+                        database.done(err);
+                        resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
+                        resp.end();
+                    });
             }); // app.get - list resource
 
             // register single resource
@@ -396,15 +407,26 @@ exports = module.exports = {
                 var mapping = typeToMapping[type];
                 var guid = req.params.guid;
 
+                var database;
                 pgConnect().then(function (db) {
+                    database = db;
                     return queryByGuid(resources, db, mapping, guid).then(function (element) {
                         element.$$meta = {permalink: mapping.type + '/' + guid};
                         resp.set('Content-Type', 'application/json');
                         resp.send(element);
                     });
                 })
-                    .fail(send500(resp))
-                    .fin(endResponse(resp));
+                    .then(function() {
+                        database.done();
+                        resp.end();
+                    })
+                    .fail(function(err) {
+                        cl("GET processing had errors. Removing pg client from pool. Error : ");
+                        cl(err);
+                        database.done(err);
+                        resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
+                        resp.end();
+                    })
             });
 
             // register PUT operation for inserts and updates
@@ -533,7 +555,9 @@ exports = module.exports = {
                 var query = SQL('select ' + columns + ',guid FROM ' + table);
                 query.WHERE('email = ', $(email));
 
+                var database;
                 pgConnect().then(function (db) {
+                    database = db;
                     return pgExec(db, query).then(function (result) {
                         var row = result.rows[0];
                         var output = {};
@@ -544,8 +568,17 @@ exports = module.exports = {
                         resp.send(output);
                     });
                 })
-                    .fail(send500(resp))
-                    .fin(endResponse(resp));
+                    .then(function() {
+                        database.done();
+                        resp.end();
+                    })
+                    .fail(function(err) {
+                        cl("GET processing had errors. Removing pg client from pool. Error : ")
+                        cl(err);
+                        database.done(err);
+                        resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
+                        resp.end();
+                    })
             }
         });
     },

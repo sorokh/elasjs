@@ -54,7 +54,8 @@ var validateCommunities = function(req, resp, elasBackend) {
 
 roa.configure(app,
     {
-        logsql : true,
+//        logsql : true,
+        logsql : false,
         resources : [
             {
                 // Base url, maps 1:1 with a table in postgres (same name, except the '/' is removed)
