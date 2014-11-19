@@ -21,7 +21,6 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             params: params,
             cache: true
         }).success(function (resp) {
-                resp.$$meta.self = href;
                 d.resolve(resp);
             }).error(function (error) {
                 if(error.status === 403) {
@@ -44,7 +43,6 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         var defer = $q.defer();
         var results = [];
         for(var i = 0; i < data.results.length; i++) {
-            data.results[i].$$expanded.$$meta.self = data.results[i].href;
             results.push(data.results[i].$$expanded);
         }
 
@@ -78,7 +76,6 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         }).success(function(resp) {
                 var results = [];
                 for(var i = 0; i < resp.results.length; i++) {
-                    resp.results[i].$$expanded.$$meta.self = resp.results[i].href;
                     results.push(resp.results[i].$$expanded);
                 }
                 d.resolve({results: results, meta: resp.$$meta});
@@ -133,13 +130,18 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         return d.promise;
     };
 
-    that.createResource = function (type, resource) {
+    that.createOrUpdateResource = function (type, resource) {
         var defer = $q.defer();
-        var guid = generateGUID();
+        var url;
+        if(resource.$$meta && resource.$$meta.permalink) {
+            url = resource.$$meta.permalink;
+        } else {
+            url = '/' + type + '/' + generateGUID();
+        }
 
         $http({
             method: 'PUT',
-            url: '/' + type + '/' + guid,
+            url: url,
             data: resource,
             contentType: 'application/json',
             dataType: 'json'
@@ -177,21 +179,42 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         return defer.promise;
     };
 
+    that.deleteResource = function(resource) {
+        var defer = $q.defer();
+
+        $http({
+            method: 'DELETE',
+            url: resource.$$meta.permalink
+        }).success(function (data, status) {
+            var resp = {
+                status: status
+            };
+            defer.resolve(resp);
+        }).error(function(resp) {
+            var resp = {
+                status: status
+            };
+            defer.reject(resp);
+        });
+
+        return defer.promise;
+    };
+
     var toArray = function(list) {
         var ret = {};
 
         angular.forEach(list.results, function(value, key) {
-            ret[value.$$meta.self] = value;
+            ret[value.$$meta.href] = value;
         });
 
         return ret;
-    }
+    };
 
     var hrefToPerson = {};
 
     that.initExpandPerson = function(persons) {
         hrefToPerson = toArray(persons);
-    }
+    };
 
     that.expandPerson = function(message, key) {
         var defer = $q.defer();
@@ -213,6 +236,10 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
 
         return defer.promise;
     };
+
+    that.removePersonFromExpandCache = function(personHref) {
+        delete hrefToPerson[personHref];
+    }
 
     that.log = function (message) {
         $http({

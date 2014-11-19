@@ -1,0 +1,124 @@
+<div class="row">
+    <div class="col-md-12">
+        <h3>Instellingen</h3>
+        <hr/>
+        <div class="form">
+            <form class="form-horizontal" name="pref">
+                <div class="form-group">
+                    <label class="control-label col-md-3">Voornaam *</label>
+
+                    <div class="col-md-9" ng-class="errClass('pref','firstname')">
+                        <input type="text" class="form-control" id="firstname", name="firstname" placeholder=""
+                               ng-model="person.firstname" required ng-focus ng-maxlength="128" ng-minlength="1">
+
+                        <span class="help-block" ng-show="errShow('pref','firstname')">Voornaam is verplicht.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3">Familienaam *</label>
+
+                    <div class="col-md-9" ng-class="errClass('pref','lastname')">
+                        <input type="text" class="form-control" id="lastname", name="lastname" placeholder=""
+                               ng-model="person.lastname" required ng-focus ng-maxlength="128" ng-minlength="1">
+
+                        <span class="help-block" ng-show="errShow('pref','firstname')">Familienaam is verplicht.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="street">Straat *</label>
+
+                    <div class="col-md-9" ng-class="errClass('pref','street')">
+                        <input type="text" class="form-control" id="street" name="street"
+                               ng-model="person.street" required ng-focus ng-maxlength="256" ng-minlength="1">
+                        <span class="help-block" ng-show="errShow('pref','street')">Straat is verplicht.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="streetnumber">Nummer *</label>
+
+                    <div class="col-md-3" ng-class="errClass('pref','streetnumber')">
+                        <input type="text" class="form-control" id="streetnumber" name="streetnumber"
+                               ng-model="person.streetnumber" required ng-focus ng-maxlength="16" ng-minlength="1">
+                        <span class="help-block" ng-show="errShow('pref','streetnumber')">Nummer is verplicht.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="streetbus">Bus</label>
+
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="streetbus"
+                               ng-model="person.streetbus" ng-maxlength="16">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="zipcode">Postcode *</label>
+
+                    <div class="col-md-3" ng-class="errClass('pref','zipcode')">
+                        <input type="text" class="form-control" id="zipcode" name="zipcode"
+                               ng-model="person.zipcode" required ng-pattern="/^[0-9][0-9][0-9][0-9]$/" ng-focus>
+                        <span class="help-block" ng-show="errShow('pref','zipcode')">Postcode moet uit 4 cijfers bestaan. Bvb. 2060.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="city">Gemeente *</label>
+
+                    <div class="col-md-9" ng-class="errClass('pref','city')">
+                        <input type="text" class="form-control" id="city" name="city"
+                               ng-model="person.city" required ng-focus ng-maxlength="64" ng-minlength="1">
+                        <span class="help-block" ng-show="errShow('pref','city')">Gemeente is verplicht.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="phone">Telefoon</label>
+
+                    <div class="col-md-6" ng-class="errClass('pref','phone')">
+                        <input type="text" class="form-control" id="phone" name="phone"
+                               ng-model="person.phone" ng-pattern="/^[0-9/ ]*$/" ng-focus>
+                        <span class="help-block" ng-show="errShow('pref','phone')">Het telefoonnummer bevat een fout.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3" for="email">E-mail</label>
+
+                    <div class="col-md-9" ng-class="errClass('pref','email')">
+                        <input type="email" class="form-control" id="email" name="email"
+                               ng-model="person.email" ng-focus>
+                        <span class="help-block" ng-show="errShow('pref','email')">Het e-mail adres is niet correct.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-md-3"><h4>Interlets</h4><small>Selecteer de groepen met wie je wil interletsen</small></label>
+
+                    <div class="col-md-9" ng-repeat="community in communities">
+                        <div>
+                            <label class="checkbox" for="{{community.name}}">
+                                <input type="checkbox" ng-model="selection[community.$$meta.permalink]" name="communities" id="{{community.name}}" /> {{community.name}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+<!--                <pre ng-bind="selection | json"></pre>-->
+
+                <div class="form-group">
+                    <div class="col-md-12 text-right">
+                        <span ng-show="!pref.$valid">Er zijn fouten in het formulier.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12 text-right">
+                        <a class="btn btn-primary" ng-click="createOrUpdate('pref')">Opslaan</a>
+                        <a href="#/messages.html" class="btn btn-default">Annuleren</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -31,15 +31,15 @@
     <link rel="shortcut icon" href="favicon.ico">
 </head>
 
-<body class="ng-cloak" ng-cloack>
+<body class="ng-cloak" ng-cloack style="overflow-y: scroll; height: 101%;">
 <!-- Header starts -->
 <header>
     <div class="container">
         <div class="row">
             <div class="col-md-4 col-sm-4">
-<!--                <a href="#/"><img src="/img/LV
-_bollen_mettekst_horizontaal.png" class="img-responsive"></a>-->
-                <a href="#/"><img src="/img/LV_bollen_horizontaal-303px.png" class="img-responsive"></a>
+                <a href="#/"><img src="/img/LV
+_bollen_mettekst_horizontaal.png" class="img-responsive"></a>
+                <!--<a href="#/"><img src="/img/LV_bollen_horizontaal-303px.png" class="img-responsive"></a>-->
             </div>
             <div class="col-md-8 col-sm-8">
                 <div class="list">
@@ -92,7 +92,7 @@ _bollen_mettekst_horizontaal.png" class="img-responsive"></a>-->
                         <a class="dropdown-toggle" data-toggle="dropdown"><span class="fa fa-user"></span> {{me.firstname}} {{me.lastname}} <span class="caret"></span></a>
                         <ul class="dropdown-menu" role="menu">
                             <!-- Add more user related actions here is necessary -->
-                            <li><a href="#/settings.html"><span class="fa fa-cog"></span> Instellingen</a></li>
+                            <li><a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}"><span class="fa fa-cog"></span> Instellingen</a></li>
                             <li class="divider"></li>
                             <li><a ng-click="logout()"><span class="fa fa-sign-out"></span> Uitloggen</a></li>
                         </ul>
@@ -142,6 +142,7 @@ _bollen_mettekst_horizontaal.png" class="img-responsive"></a>-->
 <script src="/bowerjs/loading-bar.js"></script>
 <script src="/bowerjs/select.min.js"></script>
 <script src="js/elas.js"></script>
+<script src="js/controllers/edit_person.js"></script>
 <script src="js/notification.js"></script>
 <script src="js/backend.js"></script>
 

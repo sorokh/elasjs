@@ -54,8 +54,8 @@ var validateCommunities = function(req, resp, elasBackend) {
 
 roa.configure(app,
     {
-//        logsql : true,
-        logsql : false,
+        logsql : true,
+//        logsql : false,
         resources : [
             {
                 // Base url, maps 1:1 with a table in postgres (same name, except the '/' is removed)
@@ -94,6 +94,11 @@ roa.configure(app,
                     },
                     community: {references: '/communities'}
                 },
+                secure : [
+                    // TODO : Add security. People can only update their own accounts.
+                    // Admins can update all accounts in their community/ies.
+                    // Superadmins van update all accounts in all communities.
+                ],
                 // When a PUT operation is executed there are 2 phases of validate.
                 // Validation phase 1 is schema validation.
                 schemaUtils: {
@@ -113,13 +118,15 @@ roa.configure(app,
                 // Validation phase 2 : an array of functions with validation rules.
                 // All functions are executed. If any of them return an error object the PUT operation returns 409.
                 // The output is a combination of all error objects returned by the validation rules/
-                validate: [],
+                validate: [
+                ],
                 // All queries are URLs. Any allowed URL parameter is configured here. A function can be registered.
                 // This function receives 2 parameters :
                 //  - the value of the request parameter (string)
                 //  - a SQLbits SELECT object.
-                // TODO : Should be inside an bits.AND() construction with default condition (1=1 AND ...)
+
                 query: {
+                    // TODO : Should be inside an bits.AND() construction with default condition (1=1 AND ...)
                     communities: filterOnCommunities
                 },
                 /*
@@ -154,7 +161,7 @@ roa.configure(app,
                 map: {
                     person: {references: '/persons'},
                     posted: {
-                        oninsert: $m.now,
+//                        oninsert: $m.now,
                         onupdate: $m.now
                     },
                     type: {},
@@ -164,6 +171,15 @@ roa.configure(app,
                     unit: { onread: $m.removeifnull },
                     community: {references: "/communities"}
                 },
+                secure: [
+                    // TODO : Add security.
+                    // People should only be allowed to update their own messages.
+                    // People should only be allowed to create messages in the communities they have access to.
+                    // People should only be allowed to delete their own messages.
+                    // Admins should be allowed to update all message in their community/ies.
+                    // Admins should be allowed to delete all message in their community/ies.
+                    // Superadmins should be allowed to create in any community, update and delete all messages in all communities.
+                ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
                     type: "object",
@@ -204,6 +220,12 @@ roa.configure(app,
                     website: { onread: $m.removeifnull },
                     currencyname: {}
                 },
+                secure: [
+                    // TODO : Add security.
+                    // People should only be allowed to register new communities, with a unique name.
+                    // Admins should be allowed to update their community/ies.
+                    // Superadmins should be allowed to create, delete and update all communities
+                ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
                     name: $s.string(1,256),
@@ -227,7 +249,7 @@ roa.configure(app,
                 public: false,
                 map: {
                     transactiontimestamp: {
-                        oninsert: $m.now,
+//                        oninsert: $m.now,
                         onupdate: $m.now
                     },
                     fromperson: {references: '/persons'},
@@ -235,6 +257,12 @@ roa.configure(app,
                     description: {},
                     amount: {}
                 },
+                secure: [
+                    // TODO : Add security.
+                    // People should be allowed to create transactions for their community.
+                    // Admins should be allowed to create transactions for their community/ies.
+                    // Superadmins should be allowed to create transaction in any community.
+                ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
                     transactiontimestamp: $s.timestamp,

@@ -47,7 +47,7 @@
                 <div class="form-group">
                     <label class="control-label col-md-3" for="unit">Per</label>
 
-                    <div class="col-md-1" ng-class="errClass('nm','unit')">
+                    <div class="col-md-2" ng-class="errClass('nm','unit')">
                         <input type="text" class="form-control" id="unit" name="unit" placeholder=""
                                ng-model="message.unit" ng-focus>
                         <span class="help-block" ng-show="errShow('nm','unit')">Error.</span>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="form-group">
                     <div class="col-md-12 text-right">
-                        <a class="btn btn-primary" ng-click="create('nm')">Opslaan</a>
+                        <a class="btn btn-primary" ng-click="createOrUpdate('nm')">Opslaan</a>
                         <a href="#/messages.html" class="btn btn-default">Annuleren</a>
                     </div>
                 </div>

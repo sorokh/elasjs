@@ -278,6 +278,87 @@ function logRequests(req, res, next) {
     next();
 }
 
+function executePutInsideTransaction(db, url, element) {
+    cl(url.split("/"));
+    var type = '/' + url.split("/")[1];
+    var guid = url.split("/")[2];
+
+    var typeToMapping = typeToConfig(resources);
+    // var type = '/' + req.route.path.split("/")[1];
+    var mapping = typeToMapping[type];
+    var table = mapping.type.split("/")[1];
+
+    cl(element);
+
+    if (mapping.schemaUtils) {
+        var error = getSchemaValidationErrors(element, mapping.schemaUtils);
+        if (error) {
+            cl("Returning 409 Conflict with errors to client.");
+            resp.set('Content-Type', 'application/json');
+            resp.status(409).send(error);
+            return;
+        } else {
+            cl("Schema validation passed.");
+        }
+    }
+
+    // check and remove types from references.
+    for (var key in mapping.map) {
+        if (mapping.map.hasOwnProperty(key)) {
+            if (mapping.map[key].references) {
+                var value = element[key].href;
+                var referencedType = mapping.map[key].references;
+                var referencedMapping = typeToMapping[referencedType];
+                var parts = value.split("/");
+                var type = '/' + parts[1];
+                var guid = parts[2];
+                if (type === referencedMapping.type) {
+                    element[key] = guid;
+                } else {
+                    console.log("Faulty reference detected [" + element[key].href + "], detected [" + type + "] expected [" + referencedMapping.type + "]");
+                    return;
+                }
+            }
+        }
+    }
+
+    var countquery = SQL('select count(*) from ' + table).WHERE('"guid" = ', $(guid));
+    return pgExec(db, countquery).then(function (results) {
+        var deferred = Q.defer();
+
+        if (results.rows[0].count == 1) {
+            executeOnFunctions(resources, mapping, "onupdate", element);
+
+            var update = UPDATE(table).SET(element)._('where guid=', $(guid));
+            return pgExec(db, update).then(function (results) {
+                if (mapping.afterupdate && mapping.afterupdate.length > 0) {
+                    if (mapping.afterupdate.length == 1) {
+                        return mapping.afterupdate[0](db, element);
+                    } else {
+                        // TODO : Support more than one after* function.
+                        cl("More than one after* function not supported yet. Ignoring");
+                    }
+                }
+            });
+        } else {
+            element.guid = guid;
+            executeOnFunctions(resources, mapping, "oninsert", element);
+
+            var insert = INSERT.INTO(table, element);
+            return pgExec(db, insert).then(function (results) {
+                if (mapping.afterinsert && mapping.afterinsert.length > 0) {
+                    if (mapping.afterinsert.length == 1) {
+                        return mapping.afterinsert[0](db, element);
+                    } else {
+                        // TODO : Support more than one after* function.
+                        cl("More than one after* function not supported yet. Ignoring");
+                    }
+                }
+            });
+        }
+    }); // pgExec(db,countquery)...
+}
+
 /* express.js application, configuration for roa4node */
 exports = module.exports = {
     configure: function (app, config) {
@@ -383,11 +464,11 @@ exports = module.exports = {
                         });
                     })
                 })
-                    .then(function() {
+                    .then(function () {
                         database.done();
                         resp.end();
                     })
-                    .fail(function(err) {
+                    .fail(function (err) {
                         cl("GET processing had errors. Removing pg client from pool. Error : ");
                         cl(err);
                         database.done(err);
@@ -416,11 +497,11 @@ exports = module.exports = {
                         resp.send(element);
                     });
                 })
-                    .then(function() {
+                    .then(function () {
                         database.done();
                         resp.end();
                     })
-                    .fail(function(err) {
+                    .fail(function (err) {
                         cl("GET processing had errors. Removing pg client from pool. Error : ");
                         cl(err);
                         database.done(err);
@@ -435,97 +516,25 @@ exports = module.exports = {
                 app.use(url, checkBasicAuthentication);
             }
             app.put(url, function (req, resp) {
-                var typeToMapping = typeToConfig(resources);
-                var type = '/' + req.route.path.split("/")[1];
-                var mapping = typeToMapping[type];
-                var table = mapping.type.split("/")[1];
-
-                var element = req.body;
-                cl(element);
-
-                if (mapping.schemaUtils) {
-                    var error = getSchemaValidationErrors(element, mapping.schemaUtils);
-                    if (error) {
-                        cl("Returning 409 Conflict with errors to client.");
-                        resp.set('Content-Type', 'application/json');
-                        resp.status(409).send(error);
-                        return;
-                    } else {
-                        cl("Schema validation passed.");
-                    }
-                }
-
-                // check and remove types from references.
-                for (var key in mapping.map) {
-                    if (mapping.map.hasOwnProperty(key)) {
-                        if (mapping.map[key].references) {
-                            var value = element[key].href;
-                            var referencedType = mapping.map[key].references;
-                            var referencedMapping = typeToMapping[referencedType];
-                            var parts = value.split("/");
-                            var type = '/' + parts[1];
-                            var guid = parts[2];
-                            if (type === referencedMapping.type) {
-                                element[key] = guid;
-                            } else {
-                                console.log("Faulty reference detected [" + element[key].href + "], detected [" + type + "] expected [" + referencedMapping.type + "]");
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                var countquery = SQL('select count(*) from ' + table).WHERE('"guid" = ', $(req.params.guid));
+                var url = req.path;
                 pgConnect().then(function (db) {
-                    return pgExec(db,SQL("BEGIN")).then(function() {
-                        return pgExec(db, countquery).then(function (results) {
-                            var deferred = Q.defer();
-
-                            if (results.rows[0].count == 1) {
-                                executeOnFunctions(resources, mapping, "onupdate", element);
-
-                                var update = UPDATE(table).SET(element)._('where guid=', $(req.params.guid));
-                                return pgExec(db, update).then(function (results) {
-                                    if (mapping.afterupdate && mapping.afterupdate.length > 0) {
-                                        if(mapping.afterupdate.length == 1) {
-                                            return mapping.afterupdate[0](db,element);
-                                        } else {
-                                            // TODO : Support more than one after* function.
-                                            cl("More than one after* function not supported yet. Ignoring");
-                                        }
-                                    }
-                                });
-                            } else {
-                                element.guid = req.params.guid;
-                                executeOnFunctions(resources, mapping, "oninsert", element);
-
-                                var insert = INSERT.INTO(table, element);
-                                return pgExec(db, insert).then(function (results) {
-                                    if (mapping.afterinsert && mapping.afterinsert.length > 0) {
-                                        if(mapping.afterinsert.length == 1) {
-                                            return mapping.afterinsert[0](db,element);
-                                        } else {
-                                            // TODO : Support more than one after* function.
-                                            cl("More than one after* function not supported yet. Ignoring");
-                                        }
-                                    }
-                                });
-                            }
-                        }); // pgExec(db,countquery)...
+                    return pgExec(db, SQL("BEGIN")).then(function () {
+                        executePutInsideTransaction(db, url, req.body);
                     }) // pgExec(db,SQL("BEGIN")...
-                        .then(function() {
+                        .then(function () {
                             cl("PUT processing went OK. Committing database transaction.");
-                            db.client.query("COMMIT", function(err) {
+                            db.client.query("COMMIT", function (err) {
                                 // If err is defined, client will be removed from pool.
                                 db.done(err);
                                 cl("COMMIT DONE.");
+                                resp.send(true);
                                 resp.end();
                             });
                         })
-                        .fail(function(puterr) {
+                        .fail(function (puterr) {
                             cl("PUT processing failed. Rolling back database transaction. Error was :");
                             cl(puterr);
-                            db.client.query("ROLLBACK", function(rollbackerr) {
+                            db.client.query("ROLLBACK", function (rollbackerr) {
                                 // If err is defined, client will be removed from pool.
                                 db.done(rollbackerr);
                                 cl("ROLLBACK DONE. Sending 500 Internal Server Error. [" + puterr.toString() + "]");
@@ -533,11 +542,103 @@ exports = module.exports = {
                                 resp.end();
                             });
                         });
-
                 }); // pgConnect
 
             }); // app.put
-        }
+
+            // Register delete operation for resource
+            url = mapping.type + '/:guid';
+            if (!mapping.public) {
+                app.use(url, checkBasicAuthentication);
+            }
+            app.delete(url, function (req, resp) {
+                var typeToMapping = typeToConfig(resources);
+                var type = '/' + req.route.path.split("/")[1];
+                var mapping = typeToMapping[type];
+                var table = mapping.type.split("/")[1];
+
+                pgConnect().then(function (db) {
+                    return pgExec(db, SQL("BEGIN")).then(function () {
+                        var deletequery = bits.DELETE.FROM(table)._("WHERE guid = ", bits.$(req.params.guid));
+
+                        return pgExec(db, deletequery).then(function (results) {
+                            if (results.rowCount == 1) {
+                                if (mapping.afterdelete && mapping.afterdelete.length > 0) {
+                                    if (mapping.afterdelete.length == 1) {
+                                        return mapping.afterdelete[0](db, req.params.guid);
+                                    } else {
+                                        // TODO : Support more than one after* function.
+                                        cl("More than one after* function not supported yet. Ignoring");
+                                    }
+                                }
+                            }
+                        }); // pgExec delete
+                    }) // pgExec(db,SQL("BEGIN")...
+                        .then(function () {
+                            cl("DELETE processing went OK. Committing database transaction.");
+                            db.client.query("COMMIT", function (err) {
+                                // If err is defined, client will be removed from pool.
+                                db.done(err);
+                                cl("COMMIT DONE.");
+                                resp.send(true);
+                                resp.end();
+                            });
+                        })
+                        .fail(function (delerr) {
+                            cl("DELETE processing failed. Rolling back database transaction. Error was :");
+                            cl(delerr);
+                            db.client.query("ROLLBACK", function (rollbackerr) {
+                                // If err is defined, client will be removed from pool.
+                                db.done(rollbackerr);
+                                cl("ROLLBACK DONE. Sending 500 Internal Server Error. [" + delerr.toString() + "]");
+                                resp.status(500).send("Internal Server Error. [" + delerr.toString() + "]");
+                                resp.end();
+                            });
+                        });
+                }); // pgConnect
+            }); // app.delete
+        } // for all mappings.
+
+        app.use('/batch', checkBasicAuthentication);
+        app.put('/batch', function(req, resp) {
+            // An array of objects with 'href', 'verb' and 'body'
+            var batch = req.body;
+
+            pgConnect().then(function (db) {
+                return pgExec(db, SQL("BEGIN")).then(function () {
+                    for(var i=0; i<batch.length; i++) {
+                        var element = batch[i];
+                        var url = element.href;
+                        var body = element.body;
+                        var verb = element.verb;
+                        if(verb === "PUT") {
+                            executePutInsideTransaction(db, url, body);
+                        }
+                    }
+                }) // pgExec(db,SQL("BEGIN")...
+                    .then(function () {
+                        cl("PUT processing went OK. Committing database transaction.");
+                        db.client.query("COMMIT", function (err) {
+                            // If err is defined, client will be removed from pool.
+                            db.done(err);
+                            cl("COMMIT DONE.");
+                            resp.send(true);
+                            resp.end();
+                        });
+                    })
+                    .fail(function (puterr) {
+                        cl("PUT processing failed. Rolling back database transaction. Error was :");
+                        cl(puterr);
+                        db.client.query("ROLLBACK", function (rollbackerr) {
+                            // If err is defined, client will be removed from pool.
+                            db.done(rollbackerr);
+                            cl("ROLLBACK DONE. Sending 500 Internal Server Error. [" + puterr.toString() + "]");
+                            resp.status(500).send("Internal Server Error. [" + puterr.toString() + "]");
+                            resp.end();
+                        });
+                    });
+            }); // pgConnect
+        }); // app.put('/batch');
 
         app.use('/me', checkBasicAuthentication);
         app.get('/me', function (req, resp) {

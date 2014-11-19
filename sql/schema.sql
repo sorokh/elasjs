@@ -37,7 +37,7 @@ CREATE TABLE "persons" (
 
 CREATE TABLE "transactions" (
   "guid" character varying(36) unique,
-  "transactiontimestamp" timestamp not null,
+  "transactiontimestamp" timestamp with time zone not null default (now() at time zone 'utc'),
   "fromperson" character varying(36) references "persons"(guid),
   "toperson" character varying(36) references "persons"(guid),
   "description" character varying(256),
@@ -47,7 +47,7 @@ CREATE TABLE "transactions" (
 CREATE TABLE "messages" (
   "guid" character varying(36) unique,
   "person" character varying(36) references "persons"(guid),
-  "posted" timestamp not null,
+  "posted" timestamp with time zone not null default (now() at time zone 'utc'),
   "type" character varying(10) not null,
   "title" character varying(256) not null,
   "description" character varying(1024),

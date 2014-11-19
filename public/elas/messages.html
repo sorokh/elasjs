@@ -12,7 +12,12 @@
     </div>
     <div class="col-md-5 text-right">
         <a href="#/new_transaction.html" class="btn btn-primary">Nieuwe waardering ingeven</a>&nbsp;
-        <a href="#/new_message.html" class="btn btn-primary">Nieuw bericht ingeven</a>
+        <a href="#/edit_message.html" class="btn btn-primary">Nieuw bericht ingeven</a>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <small>&nbsp;U ziet momenteel berichten van <strong>LETS Regio Dendermonde</strong>. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Wijzigen...</a><small>
     </div>
 </div>
 
@@ -20,27 +25,44 @@
     <div class="row">
         <div class="col-md-12">
             <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
-                <div class="entry">
+<!--                <div class="entry">-->
                     <div class="meta">
-                        <i class="fa fa-calendar"></i> {{message.posted}} <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}}
-                        <i class="fa fa-folder-open"></i> <a href="#">Diensten</a>
-                        <span class="pull-right">
-                            <a ng-href="#/new_message.html?message={{message.$$meta.permalink}}" ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-primary fa fa-edit"></span></a>
-                            <a ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-primary fa fa-trash-o"></span></a>
-                        </span>
-                    </div>
-                        <h4>
+                        <a ng-click="toggle(message)">
+<!--                            <i class="fa fa-chevron-right" ng-hide="message.$$opened"></i>
+                            <i class="fa fa-chevron-down" ng-show="message.$$opened"></i>-->
+                            <span ng-show="isNew(message)" class="color">
+                                <i class="fa fa-star"></i>
+                            </span>
                             <span ng-show="message.type == 'offer'">(Aanbod) </span>
                             <span ng-show="message.type == 'request'">(Vraag) </span>
                             {{message.title}}
-                        </h4>
+                        </a>
+                        <span class="pull-right">
+                            <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}}
+                            <i class="fa fa-calendar"></i> {{message.posted | date: 'dd/MM/yyyy'}}
+                            <a ng-href="#/edit_message.html?message={{message.$$meta.permalink}}"
+                               ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-primary fa fa-edit"></span></a>
+                            <a data-toggle="modal"
+                               data-target="#deleteModal"
+                               ng-click="select(message)"
+                               ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-warning fa fa-trash-o"></span></a>
+                        </span>
 
-                    {{message.description}} <span ng-show="message.amount && message.unit"> ({{message.amount}} duimkes per {{message.unit}})</span><br>
-                    <span ng-show="message.person.$$expanded.street"><a target="_blank" ng-href="https://www.google.be/maps/place/{{message.person.$$expanded.street}}+{{message.person.$$expanded.streetnumber}},{{message.person.$$expanded.zipcode}}+{{message.person.$$expanded.city}}"><span class="fa fa-map-marker"></span> {{message.person.$$expanded.street}} {{message.person.$$expanded.streetnumber}} {{message.person.$$expanded.streetbus}}, {{message.person.$$expanded.zipcode}} {{message.person.$$expanded.city}}</a>&nbsp;&nbsp;</span>
-                    <span ng-show="message.person.$$expanded.email"><a ng-href="mailto:{{message.person.$$expanded.email}}"><span class="fa fa-envelope"></span> {{message.person.$$expanded.email}}</a>&nbsp;&nbsp;</span>
-                    <span ng-show="message.person.$$expanded.phone"><span class="fa fa-mobile-phone"></span> {{message.person.$$expanded.phone}}&nbsp;&nbsp;</span>
+                    </div>
+                    <span ng-show="message.$$opened">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    {{message.description}} <span ng-show="message.amount && message.unit"> ({{message.amount}} duimkes per {{message.unit}})</span><br>
+                                    <span ng-show="message.person.$$expanded.street"><a target="_blank" ng-href="https://www.google.be/maps/place/{{message.person.$$expanded.street}}+{{message.person.$$expanded.streetnumber}},{{message.person.$$expanded.zipcode}}+{{message.person.$$expanded.city}}"><span class="fa fa-map-marker"></span> {{message.person.$$expanded.street}} {{message.person.$$expanded.streetnumber}} <span ng-show="message.person.$$expanded.streetbus">bus </span>{{message.person.$$expanded.streetbus}}, {{message.person.$$expanded.zipcode}} {{message.person.$$expanded.city}}</a>&nbsp;&nbsp;</span>
+                                    <span ng-show="message.person.$$expanded.email"><a ng-href="mailto:{{message.person.$$expanded.email}}"><span class="fa fa-envelope"></span> {{message.person.$$expanded.email}}</a>&nbsp;&nbsp;</span>
+                                    <span ng-show="message.person.$$expanded.phone"><span class="fa fa-mobile-phone"></span> {{message.person.$$expanded.phone}}&nbsp;&nbsp;</span>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
                 </div>
-            </div>
+<!--            </div>-->
             <!-- Pagination
             <div class="paging">
                 <span class='current'>1</span>
@@ -49,6 +71,25 @@
                 <a href='#'>6</a>
                 <a href="#">Volgende</a>
             </div>-->
+
+            <!-- Modal -->
+            <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                            <h4 class="modal-title" id="myModalLabel">Bericht verwijderen ?</h4>
+                        </div>
+                        <div class="modal-body">
+                            Bent u zeker dat u dit bericht definitief wilt verwijderen ?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Annuleren</button>
+                            <button ng-click="deleteSelected()" type="button" class="btn btn-primary" data-dismiss="modal">Verwijderen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="clearfix"></div>
         </div>
