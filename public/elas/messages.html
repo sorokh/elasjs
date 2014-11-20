@@ -24,12 +24,11 @@
 <div class="blog">
     <div class="row">
         <div class="col-md-12">
-            <div class="posts" ng-repeat="message in messages | filter:messagesFilter">
-<!--                <div class="entry">-->
+            <div class="posts">
+                <div ng-repeat="message in messages | filter:messagesFilter">
+    <!--                <div class="entry">-->
                     <div class="meta">
                         <a ng-click="toggle(message)">
-<!--                            <i class="fa fa-chevron-right" ng-hide="message.$$opened"></i>
-                            <i class="fa fa-chevron-down" ng-show="message.$$opened"></i>-->
                             <span ng-show="isNew(message)" class="color">
                                 <i class="fa fa-star"></i>
                             </span>
@@ -47,7 +46,6 @@
                                ng-click="select(message)"
                                ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-warning fa fa-trash-o"></span></a>
                         </span>
-
                     </div>
                     <span ng-show="message.$$opened">
                         <div class="container-fluid">
@@ -61,17 +59,17 @@
                             </div>
                         </div>
                     </span>
+    <!--                </div>--> <!-- entry -->
                 </div>
-<!--            </div>-->
-            <!-- Pagination
-            <div class="paging">
-                <span class='current'>1</span>
-                <a href='#'>2</a>
-                <span class="dots">&hellip;</span>
-                <a href='#'>6</a>
-                <a href="#">Volgende</a>
-            </div>-->
-
+                <!-- Pagination
+                <div class="paging">
+                    <span class='current'>1</span>
+                    <a href='#'>2</a>
+                    <span class="dots">&hellip;</span>
+                    <a href='#'>6</a>
+                    <a href="#">Volgende</a>
+                </div>-->
+            </div>
             <!-- Modal -->
             <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
@@ -90,8 +88,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="clearfix"></div>
         </div>
     </div>
 </div>

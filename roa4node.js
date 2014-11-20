@@ -311,9 +311,9 @@ function executePutInsideTransaction(db, url, element) {
                 var referencedMapping = typeToMapping[referencedType];
                 var parts = value.split("/");
                 var type = '/' + parts[1];
-                var guid = parts[2];
+                var refguid = parts[2];
                 if (type === referencedMapping.type) {
-                    element[key] = guid;
+                    element[key] = refguid;
                 } else {
                     console.log("Faulty reference detected [" + element[key].href + "], detected [" + type + "] expected [" + referencedMapping.type + "]");
                     return;
@@ -519,7 +519,7 @@ exports = module.exports = {
                 var url = req.path;
                 pgConnect().then(function (db) {
                     return pgExec(db, SQL("BEGIN")).then(function () {
-                        executePutInsideTransaction(db, url, req.body);
+                        return executePutInsideTransaction(db, url, req.body);
                     }) // pgExec(db,SQL("BEGIN")...
                         .then(function () {
                             cl("PUT processing went OK. Committing database transaction.");
@@ -606,15 +606,19 @@ exports = module.exports = {
 
             pgConnect().then(function (db) {
                 return pgExec(db, SQL("BEGIN")).then(function () {
+                    var promises = [];
+
                     for(var i=0; i<batch.length; i++) {
                         var element = batch[i];
                         var url = element.href;
                         var body = element.body;
                         var verb = element.verb;
                         if(verb === "PUT") {
-                            executePutInsideTransaction(db, url, body);
+                            promises.push(executePutInsideTransaction(db, url, body));
                         }
                     }
+
+                    return Q.all(promises);
                 }) // pgExec(db,SQL("BEGIN")...
                     .then(function () {
                         cl("PUT processing went OK. Committing database transaction.");
