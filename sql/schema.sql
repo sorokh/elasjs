@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS "interletsApprovals";
+DROP TABLE IF EXISTS "interletsSettings";
+
 DROP TABLE IF EXISTS "messages";
 DROP TABLE IF EXISTS "transactions";
 DROP TABLE IF EXISTS "persons";
@@ -53,5 +56,19 @@ CREATE TABLE "messages" (
   "description" character varying(1024),
   "amount" integer,
   "unit" character varying(32),
+  "community" character varying(36) references "communities"(guid)
+);
+
+-- Approvals for interlets. An interlets requires 2 approvals. Group A must approves B, and B must approve A.
+CREATE TABLE "interletsApprovals" (
+  "guid" character varying(36) unique,
+  "community" character varying(36) references "communities"(guid),
+  "approved" character varying(36) references "communities"(guid)
+);
+
+-- Selected interlets communities that are visible to a person.
+CREATE TABLE "interletsSettings" (
+  "guid" character varying(36) unique,
+  "person" character varying(36) references "persons"(guid),
   "community" character varying(36) references "communities"(guid)
 );

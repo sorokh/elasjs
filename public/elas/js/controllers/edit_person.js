@@ -14,8 +14,14 @@ app.controller('elasEditPersonController', function ($scope, $http, $base64, $lo
         $scope.person = {};
     }
 
-    elasBackend.getListResourcePaged("/communities").then(function(communities) {
-        $scope.communities = communities.results;
+    elasBackend.getListResourcePaged(
+        "/interletsApprovals",
+        {approved: $scope.me.community.href}
+    ).then(function(ilas) {
+        return elasBackend.expand(ilas.results, ['community']);
+    }).then(function(ilas) {
+        $scope.interletsApprovals = ilas;
+            cl(ilas);
     });
 
     $scope.selection = {};

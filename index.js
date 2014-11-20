@@ -49,6 +49,38 @@ var filterOnCommunities = function(value, select) {
     }
 };
 
+var filterOnApproved = function(value, select) {
+    var syntax = function() {
+        cl("ignoring parameter [approved] - syntax error. ["+ value + "]");
+    };
+
+    if(value) {
+        var permalinks = value.split(",");
+        var guids = [];
+        for(var i=0; i<permalinks.length; i++) {
+            if(permalinks[i].indexOf("/communities/") == 0) {
+                var guid = permalinks[i].substr(13);
+                if(guid.length == 36) {
+                    guids.push(guid);
+                } else {
+                    syntax();
+                    return;
+                }
+            } else {
+                syntax();
+                return;
+            }
+        }
+        if(guid.length == 36) {
+            select.WHERE('approved').IN(guids);
+        } else {
+            syntax();
+            return;
+        }
+    }
+};
+
+
 var validateCommunities = function(req, resp, elasBackend) {
 };
 
@@ -293,6 +325,28 @@ roa.configure(app,
                         return deferred.promise;
                     }
                 ]
+            },
+            {
+                type: "/interletsApprovals",
+                public: false,
+                map: {
+                    community: {references: '/communities'},
+                    approved: {references: '/communities'}
+                },
+                secure: [
+                    // TODO : Add security.
+                    // Only admins should be allowed to create / approve a new interlets approval.
+                ],
+                schemaUtils: {
+                    $schema: "http://json-schema.org/schema#",
+                    community: $s.permalink("/communities"),
+                    approved: $s.permalink("/communities")
+                },
+                query : {
+                    approved: filterOnApproved
+                },
+                afterinsert : [],
+                afterupdate : []
             }
         ]
     });

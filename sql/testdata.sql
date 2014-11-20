@@ -20,3 +20,6 @@ INSERT INTO "messages" VALUES ('a391efaf-485e-45bb-8688-87d7bdfee9f6', '2f11714a
 INSERT INTO "messages" VALUES ('e1332ca8-a886-4581-8159-11f0568011b8', '2f11714a-9c45-44d3-8cde-cd37eb0c048b', '2014-10-15 09:01:06', 'request', 'Wie heeft een meter om leidingen in muur te traceren ?', 'Zou een rek willen ophangen en wil zeker zijn dat er niks loopt.',   null, null, '8bf649b4-c50a-4ee9-9b02-877aa0a71849');
 INSERT INTO "messages" VALUES ('7f5f646c-8f0b-4ce6-97ce-8549b8b78234', '82565813-943e-4d1a-ac58-8b4cbc865bdb', '2014-10-11 01:02:06', 'offer', 'Lets Kerstmarkt - zat. 13 dec', 'WANNEER? zaterdag 13 december 2014 WAAR? HuisElf.',   null, null, '57561082-1506-41e8-a57e-98fee9289e0c');
 
+-- interletsApprovals
+INSERT INTO "interletsApprovals" VALUES ('8b40a8fd-3eff-41c7-b42d-9948fb5318ba','8bf649b4-c50a-4ee9-9b02-877aa0a71849','57561082-1506-41e8-a57e-98fee9289e0c');
+INSERT INTO "interletsApprovals" VALUES ('17c4efbf-44a9-4db3-9da0-9502e2c1bd00','57561082-1506-41e8-a57e-98fee9289e0c','8bf649b4-c50a-4ee9-9b02-877aa0a71849');

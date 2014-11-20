@@ -149,6 +149,10 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             var resp = {
                 status: status
             };
+
+            // Remove from expand cache.
+            delete hrefToResource[resource.$$meta.messagePermalink];
+
             defer.resolve(resp);
         }).error(function(error) {
                 // TODO : Root error, send to /log + message to the user...
@@ -171,6 +175,10 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             var resp = {
                 status: status
             };
+
+            // Remove from expand cache.
+            delete hrefToResource[resource.$$meta.messagePermalink];
+
             defer.resolve(resp);
         }).error(function(resp) {
             defer.reject(resp);
@@ -189,6 +197,10 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             var resp = {
                 status: status
             };
+
+            // Remove from expand cache.
+            delete hrefToResource[resource.$$meta.messagePermalink];
+
             defer.resolve(resp);
         }).error(function(resp) {
             var resp = {
@@ -239,7 +251,43 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
 
     that.removePersonFromExpandCache = function(personHref) {
         delete hrefToPerson[personHref];
-    }
+    };
+
+    var hrefToResource = {};
+
+    expandOne = function(resource, key) {
+        var defer = $q.defer();
+
+        var cached = hrefToResource[resource[key].href];
+        if(!cached) {
+            that.getResource(resource[key].href)
+                .then(function(data) {
+                    resource[key].$$expanded = data;
+                    hrefToResource[resource[key].href] = data;
+                    defer.resolve(resource);
+                }, function(error) {
+                    // TODO
+                });
+        } else {
+            resource[key].$$expanded = cached;
+            defer.resolve(resource);
+        }
+
+        return defer.promise;
+    };
+
+    // Do client-side expansion (with local caching) on a list of resources, for one or more keys.
+    that.expand = function(resources, keys) {
+        var promises = [];
+
+        angular.forEach(resources, function(resource) {
+            angular.forEach(keys, function(key) {
+                promises.push(expandOne(resource,key));
+            });
+        });
+
+        return $q.all(promises);
+    };
 
     that.log = function (message) {
         $http({

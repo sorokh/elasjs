@@ -778,6 +778,10 @@ exports = module.exports = {
         timestamp : {
             type: "string",
             format: "date-time"
+        },
+
+        boolean : {
+            type: "boolean"
         }
     }
 }
