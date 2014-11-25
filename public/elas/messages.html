@@ -38,6 +38,7 @@
                 <div ng-repeat="message in messages | filter:messagesFilter">
     <!--                <div class="entry">-->
                     <div class="meta">
+                        <small>{{message.posted | date: 'dd/MM/yyyy'}}</small>
                         <a ng-click="toggle(message)">
                             <span ng-show="isNew(message)" class="color">
                                 <i class="fa fa-star"></i>
@@ -47,14 +48,13 @@
                             {{message.title}}
                         </a>
                         <span class="pull-right">
-                            <i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}}
-                            <i class="fa fa-calendar"></i> {{message.posted | date: 'dd/MM/yyyy'}}
+                            <small><i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}}</small>
                             <a ng-href="#/edit_message.html?message={{message.$$meta.permalink}}"
-                               ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-primary fa fa-edit"></span></a>
+                               ng-show="message.person.href == me.$$meta.permalink">&nbsp;<span class="btn btn-sm btn-default fa fa-edit"></span></a>
                             <a data-toggle="modal"
                                data-target="#deleteModal"
                                ng-click="select(message)"
-                               ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-warning fa fa-trash-o"></span></a>
+                               ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-default fa fa-trash-o"></span></a>
                         </span>
                     </div>
                     <span ng-show="message.$$opened">
