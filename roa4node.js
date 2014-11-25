@@ -673,17 +673,17 @@ exports = module.exports = {
                         resp.send(output);
                     });
                 })
-                    .then(function() {
-                        database.done();
-                        resp.end();
-                    })
-                    .fail(function(err) {
-                        cl("GET processing had errors. Removing pg client from pool. Error : ")
-                        cl(err);
-                        database.done(err);
-                        resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
-                        resp.end();
-                    })
+                .then(function() {
+                    database.done();
+                    resp.end();
+                })
+                .fail(function(err) {
+                    cl("GET processing had errors. Removing pg client from pool. Error : ")
+                    cl(err);
+                    database.done(err);
+                    resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
+                    resp.end();
+                });
             }
         });
     },

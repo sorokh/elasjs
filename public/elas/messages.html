@@ -17,7 +17,17 @@
 </div>
 <div class="row">
     <div class="col-md-12">
-        <small>&nbsp;U ziet momenteel berichten van <strong>LETS Regio Dendermonde</strong>. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Wijzigen...</a><small>
+        <span ng-show="interletsCommunityCount() > 0">
+            <small>
+                &nbsp;Je ziet momenteel berichten van <strong>{{me.community.$$expanded.name}}</strong> en <strong>{{interletsCommunityCount()}} andere groep(en)</strong>.
+                <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Wijzigen...</a>
+            </small>
+        </span>
+        <span ng-show="interletsCommunityCount() == 0">
+            <small>
+                &nbsp;Je ziet momenteel berichten van je eigen groep. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Interlets activeren...</a>
+            </small>
+        </span>
     </div>
 </div>
 

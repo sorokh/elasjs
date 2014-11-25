@@ -1,5 +1,8 @@
-DROP TABLE IF EXISTS "interletsApprovals";
-DROP TABLE IF EXISTS "interletsSettings";
+-- Needed for uuid_generate_v4() function.
+CREATE EXTENSION "uuid-ossp";
+
+DROP TABLE IF EXISTS "interletssettings";
+DROP TABLE IF EXISTS "interletsapprovals";
 
 DROP TABLE IF EXISTS "messages";
 DROP TABLE IF EXISTS "transactions";
@@ -60,15 +63,17 @@ CREATE TABLE "messages" (
 );
 
 -- Approvals for interlets. An interlets requires 2 approvals. Group A must approves B, and B must approve A.
-CREATE TABLE "interletsApprovals" (
+CREATE TABLE "interletsapprovals" (
   "guid" character varying(36) unique,
   "community" character varying(36) references "communities"(guid),
-  "approved" character varying(36) references "communities"(guid)
+  "approved" character varying(36) references "communities"(guid),
+  "deleted" boolean
 );
 
 -- Selected interlets communities that are visible to a person.
-CREATE TABLE "interletsSettings" (
+CREATE TABLE "interletssettings" (
   "guid" character varying(36) unique,
   "person" character varying(36) references "persons"(guid),
-  "community" character varying(36) references "communities"(guid)
+  "interletsapproval" character varying(36) references "interletsapprovals"(guid),
+  "active" boolean
 );

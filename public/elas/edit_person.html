@@ -97,15 +97,14 @@
                 <div class="form-group">
                     <label class="control-label col-md-3"><h4>Interlets</h4><small>Selecteer de groepen met wie je wil interletsen</small></label>
 
-                    <div class="col-md-9" ng-repeat="ila in interletsApprovals">
+                    <div class="col-md-9" ng-repeat="ils in interletssettings">
                         <div>
                             <label class="checkbox">
-                                <input type="checkbox" ng-model="selection[ila.community.href]" name="communities" id="{{ila.community.$$expanded.name}}" /> {{ila.community.$$expanded.name}}
+                                <input type="checkbox" ng-model="ils.active" name="interletssettings" id="{{ils.$$meta.permalink}}" /> {{ils.interletsapproval.$$expanded.approved.$$expanded.name}}
                             </label>
                         </div>
                     </div>
                 </div>
-<!--                <pre ng-bind="selection | json"></pre>-->
 
                 <div class="form-group">
                     <div class="col-md-12 text-right">

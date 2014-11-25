@@ -151,7 +151,7 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             };
 
             // Remove from expand cache.
-            delete hrefToResource[resource.$$meta.messagePermalink];
+            delete hrefToResource[url];
 
             defer.resolve(resp);
         }).error(function(error) {
@@ -177,7 +177,7 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             };
 
             // Remove from expand cache.
-            delete hrefToResource[resource.$$meta.messagePermalink];
+            delete hrefToResource[resource.$$meta.permalink];
 
             defer.resolve(resp);
         }).error(function(resp) {
@@ -199,7 +199,37 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             };
 
             // Remove from expand cache.
-            delete hrefToResource[resource.$$meta.messagePermalink];
+            delete hrefToResource[resource.$$meta.permalink];
+
+            defer.resolve(resp);
+        }).error(function(resp) {
+            var resp = {
+                status: status
+            };
+            defer.reject(resp);
+        });
+
+        return defer.promise;
+    };
+
+    that.batch = function(batch) {
+        var defer = $q.defer();
+
+        $http({
+            method: 'PUT',
+            url: '/batch',
+            data: batch,
+            contentType: 'application/json',
+            dataType: 'json'
+        }).success(function (data, status) {
+            var resp = {
+                status: status
+            };
+
+            // Remove from expand cache.
+            for(var i=0; i<batch.length; i++) {
+                delete hrefToResource[batch[i].href];
+            }
 
             defer.resolve(resp);
         }).error(function(resp) {
@@ -279,6 +309,14 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
     // Do client-side expansion (with local caching) on a list of resources, for one or more keys.
     that.expand = function(resources, keys) {
         var promises = [];
+
+        if(!(resources instanceof Array)) {
+            resources = [resources];
+        }
+
+        if(!(keys instanceof Array)) {
+            keys = [keys];
+        }
 
         angular.forEach(resources, function(resource) {
             angular.forEach(keys, function(key) {

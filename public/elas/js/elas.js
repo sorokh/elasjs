@@ -100,7 +100,30 @@ app.filter('propsFilter', function() {
     }
 });
 
-app.controller('elasController', function ($scope, $base64, $http, $location) {
+function initMe($scope, elasBackend, me) {
+    $scope.me = me;
+
+    // And get interletssettings + expand community.
+    return elasBackend.getListResourcePaged('/interletssettings', {
+        person: me.$$meta.permalink
+    }).then(function(ils) {
+        $scope.me.$$interletssettings = ils.results;
+        return elasBackend.expand(ils.results, "interletsapproval");
+    }).then(function() {
+        return elasBackend.expand($scope.me, "community");
+    });
+}
+
+function loadMe($http, $scope, elasBackend) {
+    return $http.get('/me')
+        .then(function(resp) {
+            var me = resp.data;
+            return initMe($scope, elasBackend, me);
+        });
+}
+
+
+app.controller('elasController', function ($scope, $base64, $http, $location, elasBackend) {
     $scope.authenticated = function() {
         var authentication = $http.defaults.headers.common.Authorization;
         if(authentication && authentication.indexOf("Basic ") == 0) {
@@ -113,106 +136,7 @@ app.controller('elasController', function ($scope, $base64, $http, $location) {
         delete $http.defaults.headers.common.Authorization;
         $location.path("/");
     };
-});
 
-app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend, $location) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
-    elasBackend.getListResourcePaged("/persons", {
-        communities: $scope.me.community.href,
-        orderby: 'firstname,lastname',
-        descending: false
-    }).then(function(persons) {
-        var names = [];
-        for(var i=0; i<persons.length; i++) {
-            names.push(persons[i].firstname + ' ' + persons[i].lastname);
-        }
-        $scope.names = names;
-    });
-
-    elasBackend.getListResourcePaged('/messages', {
-        communities: $scope.me.community.href,
-        orderby: 'posted',
-        descending: true
-    }).then(function(list) {
-        var promises = [];
-        angular.forEach(list.results, function(message,key) {
-            promises.push(elasBackend.expandPerson(message, 'person'));
-        });
-        $q.all(promises)
-            .then(function(result) {
-                $scope.messages = result;
-            });
-    });
-
-    $scope.select = function(message) {
-        $scope.selectedMessage = message;
-    };
-
-    $scope.deleteSelected = function() {
-        var message = $scope.selectedMessage;
-        elasBackend.deleteResource(message).then(function(data) {
-            var index = $scope.messages.indexOf(message);
-            if(index != -1) {
-                $scope.messages.splice(index,1);
-            }
-        }, function failed(err) {
-            cl("DELETE failed.");
-            cl(err);
-        });
-    };
-
-    $scope.ago = function(date) {
-        var now = moment(new Date());
-        var dateAsMoment = moment(date);
-        return dateAsMoment.from(now);
-    };
-
-    $scope.isNew = function(message) {
-        var lastViewed = getLastViewedDate($scope.me.email);
-        if(lastViewed) {
-            var m = new Date(message.posted);
-
-            var mt = m.getTime();
-            var vt = lastViewed.getTime();
-
-            return mt > vt;
-        } else {
-            return false;
-        }
-    };
-
-    $scope.toggle = function(message) {
-        message.$$opened = !message.$$opened;
-    };
-});
-
-var initPersons = function($scope, elasBackend) {
-    elasBackend.getListResourcePaged("/persons", {
-        communities: $scope.me.community.href,
-        orderby: 'firstname,lastname',
-        descending: false
-    }).then(function(persons) {
-        elasBackend.initExpandPerson(persons);
-    });
-}
-
-app.controller('elasMembersController', function($scope, $http, $q, elasBackend, $location) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
-    elasBackend.getListResourcePaged("/persons", {
-        communities: $scope.me.community.href,
-        orderby: 'firstname,lastname',
-        descending: false
-    }).then(function(persons) {
-        $scope.persons = persons.results;
-    });
 });
 
 app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend, $location) {
@@ -245,20 +169,29 @@ app.controller('elasLoginController', function ($scope, $http, $base64, $locatio
     $scope.doLogin = function() {
         var header = 'Basic ' + $base64.encode($scope.email + ":" + $scope.password);
         $http.get('/me', {headers: {'Authorization' : header}})
-            .then(function ok(resp) {
+            .then(function(resp) {
                 var me = resp.data;
-                $http.defaults.headers.common.Authorization = header;
-                $rootScope.me = me;
-                // Initialize persons of this group, to speed up client-side expansion.
-                initPersons($scope,elasBackend);
-                // update last logon timestamps
-                updateLastLogonDates($scope.me.email);
-                $location.path("/messages.html");
 
-            }, function fail() {
+                $http.defaults.headers.common.Authorization = header;
+                // update last logon timestamps
+                updateLastLogonDates(me.email);
+                return initMe($rootScope, elasBackend, me);
+            }, function fail(err){
                 console.log("Authentication failed.");
+            }).then(function() {
+                $location.path("/messages.html");
             });
-    }
+    };
+
+    $rootScope.interletsCommunityCount = function() {
+        var ils = $rootScope.me.$$interletssettings;
+        var ret = 0;
+        angular.forEach(ils, function(x) {
+            if(x.active) ret++;
+        });
+
+        return ret;
+    };
 });
 
 app.controller('elasEditCommunityController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
@@ -302,7 +235,6 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
         return;
     }
 
-    cl($routeParams);
     $scope.messagePermalink = $routeParams.message;
 
     if($scope.messagePermalink) {
@@ -345,67 +277,6 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
             return false;
         }
     };
-});
-
-app.controller('elasNewTransactionController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
-    elasBackend.getListResourcePaged("/persons", {
-        communities: $scope.me.community.href,
-        orderby: 'firstname,lastname',
-        descending: false
-    }).then(function(persons) {
-        $scope.people = persons.results;
-        for(var i=0; i<$scope.people.length; i++) {
-            var current = $scope.people[i];
-            if(current.$$meta.permalink === $scope.me.$$meta.permalink) {
-                $scope.people.splice(i,1);
-                break;
-            }
-        }
-        console.log(persons);
-    });
-
-    $scope.transaction = { fromperson: {}, toperson: {} };
-    $scope.person = {};
-
-    $scope.create = function(formname) {
-        if($scope[formname].$valid) {
-            cl($scope);
-            $scope.transaction.fromperson = { href: $scope.me.$$meta.permalink };
-            $scope.transaction.toperson = { href: $scope.person.selected.$$meta.permalink };
-            console.log($scope.transaction);
-            elasBackend.createOrUpdateResource('transactions', $scope.transaction)
-                .then(function ok(resp) {
-                    var cache = $cacheFactory.get('$http');
-                    cache.removeAll();
-                    $location.path("/transactions.html");
-                }, function failed(err) {
-                    console.log(err);
-                });
-        }
-    }
-
-    $scope.errClass = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
-        if(hasError) {
-            return 'has-error';
-        } else {
-            return '';
-        }
-    }
-
-    $scope.errShow = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
-        if(hasError) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 });
 
 app.config(['$routeProvider',

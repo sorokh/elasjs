@@ -80,6 +80,37 @@ var filterOnApproved = function(value, select) {
     }
 };
 
+var filterOnPerson = function(value, select) {
+    var syntax = function() {
+        cl("ignoring parameter - syntax error. ["+ value + "]");
+    };
+
+    if(value) {
+        var permalinks = value.split(",");
+        var guids = [];
+        for(var i=0; i<permalinks.length; i++) {
+            if(permalinks[i].indexOf("/persons/") == 0) {
+                var guid = permalinks[i].substr(9);
+                if(guid.length == 36) {
+                    guids.push(guid);
+                } else {
+                    syntax();
+                    return;
+                }
+            } else {
+                syntax();
+                return;
+            }
+        }
+        if(guid.length == 36) {
+            select.WHERE('person').IN(guids);
+        } else {
+            syntax();
+            return;
+        }
+    }
+};
+
 
 var validateCommunities = function(req, resp, elasBackend) {
 };
@@ -167,6 +198,7 @@ roa.configure(app,
 
                  - afterupdate
                  - afterinsert
+                 - afterdelete
 
                 These post-processing functions receive 2 arguments:
 
@@ -185,7 +217,8 @@ roa.configure(app,
                 afterupdate: [
                     function (db, element) { $u.clearPasswordCache(); }
                 ],
-                afterinsert: []
+                afterinsert: [],
+                afterdelete: []
             },
             {
                 type: "/messages",
@@ -327,7 +360,7 @@ roa.configure(app,
                 ]
             },
             {
-                type: "/interletsApprovals",
+                type: "/interletsapprovals",
                 public: false,
                 map: {
                     community: {references: '/communities'},
@@ -345,8 +378,41 @@ roa.configure(app,
                 query : {
                     approved: filterOnApproved
                 },
+                beforeinsert : [],
+                beforeupdate : [],
+                beforedelete : [],
                 afterinsert : [],
-                afterupdate : []
+                afterupdate : [],
+                afterdelete : []
+            },
+            {
+                type: "/interletssettings",
+                public: false,
+                map: {
+                    person: {references: '/persons'},
+                    interletsapproval: {references: '/interletsapprovals'},
+                    active: {}
+                },
+                secure: [
+                    // TODO : Add security.
+                    // Only admins should be allowed to create / approve a new interlets approval.
+                ],
+                schemaUtils: {
+                    $schema: "http://json-schema.org/schema#",
+                    person: $s.permalink("/persons"),
+                    interletsApproval: $s.permalink("/interletsapprovals"),
+                    active: $s.boolean
+                },
+                validate: [],
+                query : {
+                    person : filterOnPerson
+                },
+                beforeinsert : [],
+                beforeupdate : [],
+                beforedelete : [],
+                afterinsert : [],
+                afterupdate : [],
+                afterdelete: []
             }
         ]
     });
