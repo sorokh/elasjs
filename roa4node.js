@@ -268,6 +268,14 @@ function checkBasicAuthentication(req, res, next) {
     } else forbidden();
 }
 
+var allowCrossDomain = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', 'sheltered-lowlands-3555.herokuapp.com');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+    next();
+};
+
 function logRequests(req, res, next) {
     cl(req.method + " " + req.url + " starting.");
     var start = Date.now();
@@ -368,6 +376,7 @@ exports = module.exports = {
 
         app.use(forceSecureSockets);
         app.use(logRequests);
+        app.use(allowCrossDomain);
 
         for (var configIndex = 0; configIndex < resources.length; configIndex++) {
             var mapping = resources[configIndex];
