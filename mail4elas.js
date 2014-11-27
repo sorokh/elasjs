@@ -16,11 +16,18 @@ exports = module.exports = {
             "subject": "Test Mailing through Mandrill",
             "from_email": "elasng@gmail.com",
             "from_name": "Elas-NG",
-            "to": [{
-                "email": "dimitry_dhondt@yahoo.com",
-                "name": "Dimitry D'hondt",
-                "type": "to"
-            }],
+            "to": [
+                {
+                    "email": "dimitry_dhondt@yahoo.com",
+                    "name": "Dimitry D'hondt",
+                    "type": "to"
+                },
+                {
+                    "email": "dimitry.dhondt@gmail.com",
+                    "name": "Dimitry D'hondt",
+                    "type": "cc"
+                }
+            ],
             "headers": {
                 "Reply-To": "message.reply@example.com"
             }
