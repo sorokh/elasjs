@@ -32,7 +32,7 @@ app.controller('elasNewTransactionController', function ($scope, $http, $base64,
     $scope.transaction = { fromperson: {}, toperson: {} };
     $scope.person = {};
 
-    $scope.create = function(formname) {
+    $scope.createTransaction = function(formname) {
         if($scope[formname].$valid) {
             $scope.transaction.fromperson = { href: $scope.me.$$meta.permalink };
             $scope.transaction.toperson = { href: $scope.person.selected.$$meta.permalink };

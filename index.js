@@ -9,6 +9,8 @@ var $u = roa.utils;
 var $m = roa.mapUtils;
 var $s = roa.schemaUtils;
 
+var mail4elas = require("./mail4elas.js");
+
 var app = express();
 app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.json());
@@ -420,3 +422,5 @@ roa.configure(app,
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'))
 });
+
+mail4elas.run();
