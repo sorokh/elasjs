@@ -38,7 +38,8 @@ CREATE TABLE "persons" (
   "email" character varying(32) unique,
   "balance" integer not null,
   "password" character varying(64),
-  "community" character varying(36) references "communities"(guid)
+  "community" character varying(36) references "communities"(guid),
+  "mail4elas" boolean default true
 );
 
 CREATE TABLE "transactions" (

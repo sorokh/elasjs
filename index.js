@@ -164,6 +164,7 @@ roa.configure(app,
                         oninsert: $m.value(0),
                         onupdate: $m.remove
                     },
+                    mail4elas: {},
                     community: {references: '/communities'}
                 },
                 secure : [
@@ -184,8 +185,9 @@ roa.configure(app,
                     city: $s.string(1,64),
                     phone: $s.phone,
                     email: $s.email,
+                    mail4elas: $s.boolean,
                     // balance should not be validated. It can never be PUT ! If PUT, it is ignored. See above.
-                    required: ["firstname","lastname","street","streetnumber","zipcode","city"]
+                    required: ["firstname","lastname","street","streetnumber","zipcode","city", "mail4elas"]
                 },
                 // Validation phase 2 : an array of functions with validation rules.
                 // All functions are executed. If any of them return an error object the PUT operation returns 409.

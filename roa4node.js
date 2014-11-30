@@ -552,7 +552,6 @@ exports = module.exports = {
                             });
                         });
                 }); // pgConnect
-
             }); // app.put
 
             // Register delete operation for resource

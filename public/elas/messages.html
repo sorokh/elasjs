@@ -16,7 +16,7 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-6">
         <span ng-show="interletsCommunityCount() > 0">
             <small>
                 &nbsp;Je ziet momenteel berichten van <strong>{{me.community.$$expanded.name}}</strong> en <strong>{{interletsCommunityCount()}} andere groep(en)</strong>.
@@ -28,6 +28,10 @@
                 &nbsp;Je ziet momenteel berichten van je eigen groep. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Interlets activeren...</a>
             </small>
         </span>
+    </div>
+    <div class="col-md-6 text-right">
+        <span ng-show="me.mail4elas"><small>&nbsp;Je krijgt wekelijks een e-mail met vraag en aanbod. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Mail uitschakelen...</a></small></span>
+        <span ng-hide="me.mail4elas"><small>&nbsp;Je krijgt vraag en aanbod <strong>niet</strong> via e-mail. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}">Wijzigen...</a></small></span>
     </div>
 </div>
 
