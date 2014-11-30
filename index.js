@@ -429,6 +429,8 @@ roa.configure(app,
 
 app.get('/sendmails', function(request, response) {
     mail4elas.sendMail(Date.now());
+    response.send("Done.");
+    response.end();
 });
 
 app.listen(app.get('port'), function() {
