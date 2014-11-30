@@ -7,8 +7,8 @@ var cl = function(x) {
     console.log(x);
 };
 
-var baseurl = 'http://localhost:5000';
-//var baseurl = 'https://sheltered-lowlands-3555.herokuapp.com';
+//var baseurl = 'http://localhost:5000';
+var baseurl = 'https://sheltered-lowlands-3555.herokuapp.com';
 var user = 'sabine@email.be';
 var pwd = 'pwd';
 var elasurl = baseurl + '/elas';
