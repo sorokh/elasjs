@@ -113,14 +113,21 @@ var filterOnPerson = function(value, select) {
     }
 };
 
+var messagesPostedSince = function(value, select) {
+    cl("Apply postedSince filter...");
+    cl(value);
+    cl(select);
+    select.WHERE('posted > ').SQL(value);
+}
+
 
 var validateCommunities = function(req, resp, elasBackend) {
 };
 
 roa.configure(app,
     {
-        logsql : true,
-//        logsql : false,
+//        logsql : true,
+        logsql : false,
         resources : [
             {
                 // Base url, maps 1:1 with a table in postgres (same name, except the '/' is removed)
@@ -266,7 +273,8 @@ roa.configure(app,
                     required: ["person","type","title","community"]
                 },
                 query: {
-                    communities: filterOnCommunities
+                    communities: filterOnCommunities,
+                    postedSince: messagesPostedSince
                 }
             },
             {
@@ -419,8 +427,13 @@ roa.configure(app,
         ]
     });
 
+app.get('/sendmails', function(request, response) {
+    mail4elas.sendMail(Date.now());
+});
+
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'))
 });
 
-mail4elas.run();
+//mail4elas.run();
+//mail4elas.sendMail(Date.now());

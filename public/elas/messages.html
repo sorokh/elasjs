@@ -49,8 +49,9 @@
                         </a>
                         <span class="pull-right">
                             <small><i class="fa fa-user"></i> {{message.person.$$expanded.firstname}} {{message.person.$$expanded.lastname}}</small>
+                            &nbsp;
                             <a ng-href="#/edit_message.html?message={{message.$$meta.permalink}}"
-                               ng-show="message.person.href == me.$$meta.permalink">&nbsp;<span class="btn btn-sm btn-default fa fa-edit"></span></a>
+                               ng-show="message.person.href == me.$$meta.permalink"><span class="btn btn-sm btn-default fa fa-edit"></span></a>
                             <a data-toggle="modal"
                                data-target="#deleteModal"
                                ng-click="select(message)"

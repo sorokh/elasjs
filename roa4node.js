@@ -221,7 +221,7 @@ function forceSecureSockets(req, res, next) {
 
 function checkBasicAuthentication(req, res, next) {
     var forbidden = function () {
-        cl("Rejecting request !");
+        cl("Rejecting request ! Please authenticate via BASIC + TLS.");
         res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
         res.status(401).send("Forbidden");
     };
