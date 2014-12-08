@@ -7,8 +7,8 @@ var cl = function(x) {
     console.log(x);
 };
 
-//var baseurl = 'http://localhost:5000';
-var baseurl = 'https://sheltered-lowlands-3555.herokuapp.com';
+var baseurl = 'http://localhost:5000';
+//var baseurl = 'https://sheltered-lowlands-3555.herokuapp.com';
 var user = 'sabine@email.be';
 var pwd = 'pwd';
 var elasurl = baseurl + '/elas';
@@ -96,29 +96,109 @@ function generateMailHtml(community, personsByPermalink, messages) {
 
 function generateMailText(community, personsByPermalink, messages) {
     return "";
-};
+}
 
+/**
+ * Determine the email adresses for a given community.
+ * All people in the community with mail4elas == true get the emails
+ * AND all people (with mail4elas == true), that have interlets active for this community also receive the email.
+ */
+function determineMailsForCommunity(community, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink) {
+    var ret = [];
 
-function sendMailRecursive(communities, personsByPermalink) {
-    var community = communities.pop();
-    return httpGet('/messages', {communities : community.$$meta.permalink}).then(function(data) {
-        var messages = [];
-        for(var j=0; j<data.results.length; j++) {
-            messages.push(data.results[j].$$expanded);
+    var persons = mapAsArray(personsByPermalink);
+    for(var i=0; i<persons.length; i++) {
+        var person = persons[i];
+        if(person.community.href == community.$$meta.permalink && person.email && person.mail4elas) {
+            ret.push(person.email);
         }
+    }
 
-        var html = generateMailHtml(community, personsByPermalink, messages);
-        var text = generateMailText(community, personsByPermalink, messages);
-        sendmail(html, text, "Vraag & Aanbod " + community.name, community.name, ["dimitry_dhondt@yahoo.com"]);
-        sendMailRecursive(communities, personsByPermalink);
+    var interletsApprovals = mapAsArray(interletsApprovalsByPermalink);
+    var interletsSettings = mapAsArray(interletsSettingsByPermalink);
+    for(var i=0; i<interletsApprovals.length; i++) {
+        var interletsApproval = interletsApprovals[i];
+        if(interletsApproval.approved.href == community.$$meta.permalink) {
+            for(var j=0; j<interletsSettings.length; j++) {
+                var interletsSetting = interletsSettings[j];
+                if(interletsSetting.interletsapproval.href == interletsApproval.$$meta.permalink && interletsSetting.active) {
+                    // This person also needs to get the mail.
+                    var person = personsByPermalink[interletsSetting.person.href];
+                    if(person && person.email && person.mail4elas) {
+                        ret.push(person.email);
+                        cl("added " + person.email);
+                    }
+                }
+            }
+        }
+    }
+
+    //return ret;
+    // For testing purposes.
+    if(ret.indexOf("sabine@email.be") != -1) {
+        return ['dimitry_dhondt@yahoo.com'];
+    } else {
+        return [];
+    }
+}
+
+function sendMailRecursive(communities, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink) {
+    var community = communities.pop();
+    if(community) {
+        return httpGet('/messages', {communities: community.$$meta.permalink}).then(function (data) {
+            var messages = listResourceAsArray(data);
+
+            var html = generateMailHtml(community, personsByPermalink, messages);
+            var text = generateMailText(community, personsByPermalink, messages);
+
+            var emails = determineMailsForCommunity(community, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink);
+            cl("emails : ");
+            cl(emails);
+
+            sendmail(html, text, "Vraag & Aanbod " + community.name, community.name, emails);
+            sendMailRecursive(communities, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink);
+        });
+    }
+}
+
+function mapAsArray(o) {
+    var ret = [];
+
+    Object.keys(o).forEach(function(key) {
+        var val = o[key];
+        ret.push(val);
     });
-};
+
+    return ret;
+}
+
+function listResourceAsMap(data) {
+    var ret = {};
+
+    for (var i = 0; i < data.results.length; i++) {
+        ret[data.results[i].$$expanded.$$meta.permalink] = data.results[i].$$expanded;
+    }
+
+    return ret;
+}
+
+function listResourceAsArray(data) {
+    var ret = [];
+
+    for(var j=0; j<data.results.length; j++) {
+        ret.push(data.results[j].$$expanded);
+    }
+
+    return ret;
+}
 
 /* express.js application, configuration for roa4node */
 exports = module.exports = {
     sendMail: function(messagesOlderThan) {
         var communities = [];
         var personsByPermalink = {};
+        var interletsSettingsByPermalink = {};
+        var interletsApprovalsByPermalink = {};
 
         cl("Sending mails, older than " + messagesOlderThan);
 
@@ -128,12 +208,14 @@ exports = module.exports = {
             }
             return httpGet('/persons');
         }).then(function (data) {
-            // Build map of permalink -> person details.
-            for(var i=0; i<data.results.length; i++) {
-                personsByPermalink[data.results[i].href] = data.results[i].$$expanded;
-            }
-
-            return sendMailRecursive(communities, personsByPermalink);
+            personsByPermalink = listResourceAsMap(data);
+            return httpGet('/interletssettings');
+        }).then(function (data) {
+            interletsSettingsByPermalink = listResourceAsMap(data);
+            return httpGet('/interletsapprovals');
+        }).then(function (data) {
+            interletsApprovalsByPermalink = listResourceAsMap(data);
+            return sendMailRecursive(communities, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink);
         }).fail(function(error) {
             // TODO : Error handling.
             cl("Error during processing.");
