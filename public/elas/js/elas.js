@@ -1,4 +1,4 @@
-var app = angular.module('elasApp', ['ngRoute', 'notifications','base64','angular-loading-bar','ui.select']);
+var app = angular.module('elasApp', ['ngRoute', 'notifications','base64','angular-loading-bar','ui.select','ngCkeditor','ngSanitize']);
 
 var cl = function(x) {
     console.log(x);
@@ -124,6 +124,12 @@ function loadMe($http, $scope, elasBackend) {
 
 
 app.controller('elasController', function ($scope, $base64, $http, $location, elasBackend) {
+    $scope.editorOptions = {
+        language: 'nl',
+//        uiColor: '#196b7d'
+        uiColor: '#ffffff'
+    };
+
     $scope.authenticated = function() {
         var authentication = $http.defaults.headers.common.Authorization;
         if(authentication && authentication.indexOf("Basic ") == 0) {

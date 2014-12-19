@@ -29,8 +29,8 @@
 
                     <div class="col-md-9" ng-class="errClass('nm','description')">
                         <textarea class="form-control" id="description" name="description" placeholder="" rows="10"
-                                  ng-model="message.description" ng-focus ng-maxlength="1024"></textarea>
-                        <span class="help-block" ng-show="errShow('nm','description')">Het bericht te lang. (max. 1000 karakters)</span>
+                                  ng-model="message.description" ng-focus ng-maxlength="1024" ckeditor="editorOptions"></textarea>
+                        <span class="help-block" ng-show="errShow('nm','description')">Het bericht is te lang. (max. 1000 karakters)</span>
                     </div>
                 </div>
 

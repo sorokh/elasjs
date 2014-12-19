@@ -66,7 +66,7 @@
                         <div class="container-fluid">
                             <div class="row">
                                 <div class="col-md-12">
-                                    {{message.description}} <span ng-show="message.amount && message.unit"> ({{message.amount}} duimkes per {{message.unit}})</span><br>
+                                    <span ng-bind-html="message.description"></span> <span ng-show="message.amount && message.unit"> ({{message.amount}} duimkes per {{message.unit}})</span><br>
                                     <span ng-show="message.person.$$expanded.street"><a target="_blank" ng-href="https://www.google.be/maps/place/{{message.person.$$expanded.street}}+{{message.person.$$expanded.streetnumber}},{{message.person.$$expanded.zipcode}}+{{message.person.$$expanded.city}}"><span class="fa fa-map-marker"></span> {{message.person.$$expanded.street}} {{message.person.$$expanded.streetnumber}} <span ng-show="message.person.$$expanded.streetbus">bus </span>{{message.person.$$expanded.streetbus}}, {{message.person.$$expanded.zipcode}} {{message.person.$$expanded.city}}</a>&nbsp;&nbsp;</span>
                                     <span ng-show="message.person.$$expanded.email"><a ng-href="mailto:{{message.person.$$expanded.email}}"><span class="fa fa-envelope"></span> {{message.person.$$expanded.email}}</a>&nbsp;&nbsp;</span>
                                     <span ng-show="message.person.$$expanded.phone"><span class="fa fa-mobile-phone"></span> {{message.person.$$expanded.phone}}&nbsp;&nbsp;</span>

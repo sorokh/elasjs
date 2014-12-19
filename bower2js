@@ -14,3 +14,4 @@ cp bower_components/angular-loading-bar/src/loading-bar.css public/bowercss
 cp bower_components/angular-loading-bar/src/loading-bar.js public/bowerjs
 cp bower_components/angular-ui-select/dist/select.min.css public/bowercss
 cp bower_components/angular-ui-select/dist/select.min.js public/bowerjs
+cp bower_components/angular-sanitize/angular-sanitize.min.js public/bowerjs
