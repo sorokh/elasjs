@@ -216,8 +216,12 @@ app.controller('elasEditCommunityController', function ($scope, $http, $base64, 
             });
     };
 
+    $scope.fieldLeft = function(formname, fieldname) {
+        $scope[formname][fieldname].$fieldleft = true;
+    };
+
     $scope.errClass = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        var hasError = $scope.errShow(formname, fieldname);
         if(hasError) {
             return 'has-error';
         } else {
@@ -226,13 +230,13 @@ app.controller('elasEditCommunityController', function ($scope, $http, $base64, 
     };
 
     $scope.errShow = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$fieldleft;
         if(hasError) {
             return true;
         } else {
             return false;
         }
-    }
+    };
 });
 
 app.controller('elasEditMessageController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory, $routeParams) {
@@ -240,7 +244,16 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
         $location.path("/");
         return;
     }
+/*
+    $scope.insertText = function() {
+        var oEditor = CKEDITOR.instances.description;
+        console.log(oEditor);
+        var html = "<a>my anchor</a>";
 
+        var newElement = CKEDITOR.dom.element.createFromHtml( html, oEditor.document );
+        oEditor.insertElement( newElement );
+    };
+*/
     $scope.messagePermalink = $routeParams.message;
 
     if($scope.messagePermalink) {
@@ -266,8 +279,12 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
         }
     };
 
+    $scope.fieldLeft = function(formname, fieldname) {
+        $scope[formname][fieldname].$fieldleft = true;
+    };
+
     $scope.errClass = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        var hasError = $scope.errShow(formname, fieldname);
         if(hasError) {
             return 'has-error';
         } else {
@@ -276,7 +293,7 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
     };
 
     $scope.errShow = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$fieldleft;
         if(hasError) {
             return true;
         } else {

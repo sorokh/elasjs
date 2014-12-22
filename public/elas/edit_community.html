@@ -16,7 +16,7 @@
 
                                     <div class="col-md-9" ng-class="errClass('cf','name')">
                                         <input type="text" class="form-control" name="name" id="name" placeholder="LETS Herstappe"
-                                               ng-model="community.name" required ng-focus>
+                                               ng-model="community.name" required ng-blur="fieldLeft('cf','name')">
                                         <span class="help-block" ng-show="errShow('cf','name')">Groepsnaam is verplicht.</span>
                                     </div>
                                 </div>
@@ -26,7 +26,7 @@
 
                                     <div class="col-md-9" ng-class="errClass('cf','street')">
                                         <input type="text" class="form-control" id="street" name="street"
-                                               ng-model="community.street" required ng-focus>
+                                               ng-model="community.street" required ng-blur="fieldLeft('cf','street')">
                                         <span class="help-block" ng-show="errShow('cf','street')">Straat is verplicht.</span>
                                     </div>
                                 </div>
@@ -36,7 +36,7 @@
 
                                     <div class="col-md-3" ng-class="errClass('cf','streetnumber')">
                                         <input type="text" class="form-control" id="streetnumber" name="streetnumber"
-                                               ng-model="community.streetnumber" required ng-focus>
+                                               ng-model="community.streetnumber" required ng-blur="fieldLeft('cf','streetnumber')">
                                         <span class="help-block" ng-show="errShow('cf','streetnumber')">Nummer is verplicht.</span>
                                     </div>
                                 </div>
@@ -46,7 +46,7 @@
 
                                     <div class="col-md-3">
                                         <input type="text" class="form-control" id="streetbus"
-                                               ng-model="community.streetbus">
+                                               ng-model="community.streetbus" ng-blur="fieldLeft('cf','streetbus')">
                                     </div>
                                 </div>
 
@@ -55,7 +55,7 @@
 
                                     <div class="col-md-3" ng-class="errClass('cf','zipcode')">
                                         <input type="text" class="form-control" id="zipcode" name="zipcode"
-                                               ng-model="community.zipcode" required ng-pattern="/^[0-9][0-9][0-9][0-9]$/" ng-focus>
+                                               ng-model="community.zipcode" required ng-pattern="/^[0-9][0-9][0-9][0-9]$/" ng-blur="fieldLeft('cf','zipcode')">
                                         <span class="help-block" ng-show="errShow('cf','zipcode')">Postcode moet uit 4 cijfers bestaan. Bvb. 2060.</span>
                                     </div>
                                 </div>
@@ -65,7 +65,7 @@
 
                                     <div class="col-md-9" ng-class="errClass('cf','city')">
                                         <input type="text" class="form-control" id="city" name="city"
-                                               ng-model="community.city" required ng-focus>
+                                               ng-model="community.city" required ng-blur="fieldLeft('cf','city')">
                                         <span class="help-block" ng-show="errShow('cf','city')">Gemeente is verplicht.</span>
                                     </div>
                                 </div>
@@ -75,7 +75,7 @@
 
                                     <div class="col-md-6" ng-class="errClass('cf','phone')">
                                         <input type="text" class="form-control" id="phone" name="phone"
-                                               ng-model="community.phone" required ng-pattern="/^[0-9/ ]*$/" ng-focus>
+                                               ng-model="community.phone" required ng-pattern="/^[0-9/ ]*$/" ng-blur="fieldLeft('cf','phone')">
                                         <span class="help-block" ng-show="errShow('cf','phone')">Het telefoon bevat een fout.</span>
                                     </div>
                                 </div>
@@ -84,7 +84,7 @@
 
                                     <div class="col-md-9" ng-class="errClass('cf','email')">
                                         <input type="email" class="form-control" id="email" name="email"
-                                               ng-model="community.email" required ng-focus>
+                                               ng-model="community.email" required ng-blur="fieldLeft('cf','email')">
                                         <span class="help-block" ng-show="errShow('cf','email')">Het e-mail adres is niet correct.</span>
                                     </div>
                                 </div>
@@ -95,7 +95,7 @@
                                     <div class="col-md-3" ng-class="errClass('cf','currencyname')">
                                         <input type="text" class="form-control" id="currencyname" name="currencyname"
                                                placeholder="duim/pluim"
-                                               ng-model="community.currencyname" required ng-focus>
+                                               ng-model="community.currencyname" required ng-blur="fieldLeft('cf','currencyname')">
                                         <span class="help-block" ng-show="errShow('cf','currencyname')">Gelieve een naam in te geven voor jullie munt.</span>
                                     </div>
                                 </div>
@@ -105,7 +105,7 @@
 
                                     <div class="col-md-9" ng-class="errClass('cf','facebook')">
                                         <input type="url" class="form-control" id="facebook" name="facebook"
-                                               ng-model="community.facebook" ng-focus>
+                                               ng-model="community.facebook" ng-blur="fieldLeft('cf','facebook')">
                                         <span class="help-block" ng-show="errShow('cf','facebook')">De URL bevat een fout.</span>
                                     </div>
                                 </div>
@@ -116,7 +116,7 @@
                                     <div class="col-md-9" ng-class="errClass('cf','website')">
                                         <input type="text" class="form-control" id="website" name="website"
                                                placeholder="http://letsvlaanderen.be/herstappe"
-                                               ng-model="community.website" ng-focus>
+                                               ng-model="community.website" ng-blur="fieldLeft('cf','website')">
                                         <span class="help-block" ng-show="errShow('cf','website')">De URL bevat een fout.</span>
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@
 
                                     <div class="col-md-9" ng-class="errClass('cf','adminpassword')">
                                         <input type="password" class="form-control" id="adminpassword" name="adminpassword"
-                                               ng-model="community.adminpassword" required ng-focus>
+                                               ng-model="community.adminpassword" required ng-blur="fieldLeft('cf','adminpassword')">
                                         <span class="help-block" ng-show="errShow('cf','adminpassword')">Gelieve een administratief paswoord op te geven.</span>
                                     </div>
                                 </div>
