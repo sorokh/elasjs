@@ -49,7 +49,7 @@ app.controller('elasEditPersonController', function ($scope, $http, $base64, $lo
     };
 
     $scope.errClass = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        var hasError = $scope.errShow(formname,fieldname);
         if(hasError) {
             return 'has-error';
         } else {
@@ -58,7 +58,7 @@ app.controller('elasEditPersonController', function ($scope, $http, $base64, $lo
     };
 
     $scope.errShow = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && !$scope[formname][fieldname].$pristine && !$scope[formname][fieldname].$focused;
+        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$touched;
         if(hasError) {
             return true;
         } else {

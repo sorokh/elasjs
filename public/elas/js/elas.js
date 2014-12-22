@@ -142,7 +142,6 @@ app.controller('elasController', function ($scope, $base64, $http, $location, el
         delete $http.defaults.headers.common.Authorization;
         $location.path("/");
     };
-
 });
 
 app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend, $location) {
@@ -216,10 +215,6 @@ app.controller('elasEditCommunityController', function ($scope, $http, $base64, 
             });
     };
 
-    $scope.fieldLeft = function(formname, fieldname) {
-        $scope[formname][fieldname].$fieldleft = true;
-    };
-
     $scope.errClass = function(formname,fieldname) {
         var hasError = $scope.errShow(formname, fieldname);
         if(hasError) {
@@ -230,7 +225,8 @@ app.controller('elasEditCommunityController', function ($scope, $http, $base64, 
     };
 
     $scope.errShow = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$fieldleft;
+//        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$fieldleft;
+        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$touched;
         if(hasError) {
             return true;
         } else {
@@ -279,10 +275,6 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
         }
     };
 
-    $scope.fieldLeft = function(formname, fieldname) {
-        $scope[formname][fieldname].$fieldleft = true;
-    };
-
     $scope.errClass = function(formname,fieldname) {
         var hasError = $scope.errShow(formname, fieldname);
         if(hasError) {
@@ -293,7 +285,7 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
     };
 
     $scope.errShow = function(formname,fieldname) {
-        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$fieldleft;
+        var hasError = $scope[formname][fieldname].$invalid && $scope[formname][fieldname].$touched;
         if(hasError) {
             return true;
         } else {
