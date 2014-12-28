@@ -1,9 +1,4 @@
 app.controller('elasNewTransactionController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
     var communities = [];
     communities.push($scope.me.community.href);
     var ils = $scope.me.$$interletssettings;

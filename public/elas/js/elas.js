@@ -145,11 +145,6 @@ app.controller('elasController', function ($scope, $base64, $http, $location, el
 });
 
 app.controller('elasTransactionsController', function($scope, $http, $q, elasBackend, $location) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
     elasBackend.getListResourcePaged('/transactions', {
         communities: $scope.me.community.href,
         orderby : 'transactiontimestamp',
@@ -166,37 +161,6 @@ app.controller('elasTransactionsController', function($scope, $http, $q, elasBac
                     $scope.transactions = list.results;
                 });
         });
-});
-
-app.controller('elasLoginController', function ($scope, $http, $base64, $location, $rootScope, elasBackend) {
-    $scope.email = 'sabine@email.be';
-    $scope.password = 'pwd';
-    $scope.doLogin = function() {
-        var header = 'Basic ' + $base64.encode($scope.email + ":" + $scope.password);
-        $http.get('/me', {headers: {'Authorization' : header}})
-            .then(function(resp) {
-                var me = resp.data;
-
-                $http.defaults.headers.common.Authorization = header;
-                // update last logon timestamps
-                updateLastLogonDates(me.email);
-                return initMe($rootScope, elasBackend, me);
-            }, function fail(err){
-                console.log("Authentication failed.");
-            }).then(function() {
-                $location.path("/messages.html");
-            });
-    };
-
-    $rootScope.interletsCommunityCount = function() {
-        var ils = $rootScope.me.$$interletssettings;
-        var ret = 0;
-        angular.forEach(ils, function(x) {
-            if(x.active) ret++;
-        });
-
-        return ret;
-    };
 });
 
 app.controller('elasEditCommunityController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory) {
@@ -236,10 +200,6 @@ app.controller('elasEditCommunityController', function ($scope, $http, $base64, 
 });
 
 app.controller('elasEditMessageController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory, $routeParams) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
 /*
     $scope.insertText = function() {
         var oEditor = CKEDITOR.instances.description;
@@ -335,5 +295,26 @@ app.config(['$routeProvider',
             otherwise({
                 redirectTo: '/#/'
             });
-    }]);
+    }]).run(['$rootScope', '$location', '$http', '$base64',
+    function ($rootScope, $location, $http, $base64) {
+        function is_public_url($location) {
+            if($location.path() == '/edit_community.html') {
+                return true;
+            }
+        }
 
+        $rootScope.$on('$locationChangeStart', function (event, next, current) {
+            if(!is_public_url($location)) {
+                var authentication = $http.defaults.headers.common.Authorization;
+                if($location.path() !== '/' && !(authentication && authentication.indexOf("Basic ") == 0)) {
+                    var back_to_url = $location.url();
+
+                    $location.url('/');
+                    if(back_to_url) {
+                        $location.search('back_to_url', back_to_url);
+                    }
+                }
+            }
+        });
+
+    }]);

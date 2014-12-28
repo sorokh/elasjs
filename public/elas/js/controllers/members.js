@@ -1,9 +1,4 @@
 app.controller('elasMembersController', function($scope, $http, $q, elasBackend, $location) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
     var communities = [];
     communities.push($scope.me.community.href);
     var ils = $scope.me.$$interletssettings;

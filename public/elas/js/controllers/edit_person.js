@@ -1,10 +1,5 @@
 // TODO : Add server-side error logging/messaging
-app.controller('elasEditPersonController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory, $routeParams, $rootScope) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
+app.controller('elasEditPersonController', function ($scope, $http, $base64, $location, elasBackend, $cacheFactory, $routeParams, $rootScope, $anchorScroll) {
     $scope.permalink = $routeParams.person;
     if($scope.permalink) {
         elasBackend.getResource($scope.permalink).then(function(person) {
@@ -13,6 +8,9 @@ app.controller('elasEditPersonController', function ($scope, $http, $base64, $lo
     } else {
         $scope.person = {};
     }
+
+    // process anchors on the current URL and scroll to the id.
+    $anchorScroll();
 
     $scope.createOrUpdate = function(formname) {
         if($scope[formname].$valid) {

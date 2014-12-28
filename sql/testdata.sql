@@ -2,6 +2,7 @@
 INSERT INTO "communities" VALUES ('8bf649b4-c50a-4ee9-9b02-877aa0a71849','LETS Regio Dendermonde', 'Beekveldstraat', '1A', '2', '9280', 'Lebbeke', '0495940592', 'letsdendermonde@gmail.com','admin','http://www.letsdendermonde.be','https://www.facebook.com/pages/LETS-Regio-Dendermonde/113915938675095?ref=ts&fref=ts','duim');
 INSERT INTO "communities" VALUES ('57561082-1506-41e8-a57e-98fee9289e0c','LETS Aalst-Oudenaarde', 'Wellekensstraat', '45', null, '9300', 'Aalst', null, 'PeterD@steunpuntwelzijn.be', 'admin', 'http://www.welzijn.net/www_wp/sociaalweefsel/letsao/', null, 'iets');
 INSERT INTO "communities" VALUES ('6531e471-7514-43cc-9a19-a72cf6d27f4c','LETS Zele', 'Stationsstraat', '25', null, '9240', 'Zele', null, 'letszele@gmail.com', 'admin', 'http://www.letszele.be/', null, 'pluim');
+INSERT INTO "communities" VALUES ('1edb2754-8481-4996-ae5b-ec33c903ee4d','LETS Hamme', 'Neerstraat', '12', null, '9220', 'Hamme', null, 'letshamme@gmail.com', 'admin', 'http://www.letshamme.be/', null, 'zaadjes');
 
 -- persons
 -- Dendermonde
@@ -13,6 +14,8 @@ INSERT INTO "persons" VALUES ('692fa054-33ec-4a28-87eb-53df64e3d09d','Daniella',
 INSERT INTO "persons" VALUES ('82565813-943e-4d1a-ac58-8b4cbc865bdb','Steven','Plas','Mierenstraat','1B',NULL,'9310','Meldert','052112233','steven@email.be', -25, 'pwd', '57561082-1506-41e8-a57e-98fee9289e0c');
 -- Zele
 INSERT INTO "persons" VALUES ('de32ce31-af0c-4620-988e-1d0de282ee9d','Kevin','Boon','Markt','32',NULL,'9240','Zele','052422336','kevin@email.be', 0, 'pwd', '6531e471-7514-43cc-9a19-a72cf6d27f4c');
+-- Hamme
+INSERT INTO "persons" VALUES ('ab0fb783-0d36-4511-8ca5-9e29390eea4a','Eddy','Declercq','Sleepstraat','2',NULL,'9220','Hamme','052228877','eddy@email.be', 0, 'pwd', '1edb2754-8481-4996-ae5b-ec33c903ee4d');
 
 -- transactions
 INSERT INTO "transactions" VALUES ('147d360c-2bdf-4b6e-a210-3cb8ddf3ce9d', '2014-10-11 04:05:06', '9abe4102-6a29-4978-991e-2a30655030e6','2f11714a-9c45-44d3-8cde-cd37eb0c048b', 'Heerlijke aardperen', 10);

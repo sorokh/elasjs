@@ -1,9 +1,4 @@
 app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend, $location) {
-    if(!$scope.authenticated()) {
-        $location.path("/");
-        return;
-    }
-
     elasBackend.getListResourcePaged("/persons", {
         communities: $scope.me.community.href,
         orderby: 'firstname,lastname',
