@@ -71,7 +71,6 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
 
     $scope.toggle = function(message) {
         message.$$opened = !message.$$opened;
-        throw new Error("Unhandled exception");
     };
 });
 
