@@ -13,8 +13,7 @@ var configuration;
 var resources;
 var logsql;
 
-// For debug - makes detecting pool exhaustion easier.
-pg.defaults.poolSize=2;
+pg.defaults.poolSize=20;
 
 var pgConnect = function () {
     var deferred = Q.defer();
