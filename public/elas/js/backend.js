@@ -21,6 +21,7 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             params: params,
             cache: true
         }).success(function (resp) {
+                hrefToResource[resp.$$meta.permalink];
                 d.resolve(resp);
             }).error(function (error) {
                 if(error.status === 403) {
@@ -64,7 +65,7 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         return defer.promise;
     };
 
-    /* Retrieve a list resource (single page) */
+    /* Retrieve a list resource (single page)
     that.getListResource = function (url, params, cancelPromise) {
         var d = $q.defer();
         $http({
@@ -96,7 +97,7 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             });
 
         return d.promise;
-    };
+    };*/
 
     /* Retrieve a list resource, perform paging to get all pages */
     that.getListResourcePaged = function (url, params, cancelPromise) {
@@ -109,6 +110,12 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
             timeout: cancelPromise
         }).success(function(resp) {
                 getAllFromResults(resp).then(function (allResults) {
+                    // Add individual resources to resource cache.
+                    angular.forEach(allResults, function(element) {
+                        if(element.$$meta && element.$$meta.permalink) {
+                            hrefToResource[element.$$meta.permalink] = element;
+                        }
+                    });
                     d.resolve({results: allResults, meta: resp.$$meta});
                 });
             }).error(function(error) {
@@ -250,37 +257,6 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         });
 
         return ret;
-    };
-
-    var hrefToPerson = {};
-
-    that.initExpandPerson = function(persons) {
-        hrefToPerson = toArray(persons);
-    };
-
-    that.expandPerson = function(message, key) {
-        var defer = $q.defer();
-
-        var person = hrefToPerson[message[key].href];
-        if(!person) {
-            that.getResource(message[key].href)
-                .then(function(data) {
-                    message[key].$$expanded = data;
-                    hrefToPerson[message[key].href] = data;
-                    defer.resolve(message);
-                }, function(error) {
-                    // TODO
-                });
-        } else {
-            message[key].$$expanded = person;
-            defer.resolve(message);
-        }
-
-        return defer.promise;
-    };
-
-    that.removePersonFromExpandCache = function(personHref) {
-        delete hrefToPerson[personHref];
     };
 
     var hrefToResource = {};

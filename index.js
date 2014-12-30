@@ -118,11 +118,18 @@ var messagesPostedSince = function(value, select) {
     cl(value);
     cl(select);
     select.WHERE('posted > ').SQL(value);
-}
+};
 
 
 var validateCommunities = function(req, resp, elasBackend) {
 };
+
+var clearPasswordCache = function (db, element) {
+    var deferred = Q.defer();
+    $u.clearPasswordCache();
+    deferred.resolve();
+    return deferred.promise;
+}
 
 roa.configure(app,
     {
@@ -226,15 +233,12 @@ roa.configure(app,
                  or update triggered by the API call) will be rolled back.
                 */
                 afterupdate: [
-                    function (db, element) {
-                        var deferred = Q.defer();
-                        $u.clearPasswordCache();
-                        deferred.resolve();
-                        return deferred.promise;
-                    }
+                    clearPasswordCache
                 ],
                 afterinsert: [],
-                afterdelete: []
+                afterdelete: [
+                    clearPasswordCache
+                ]
             },
             {
                 type: "/messages",

@@ -43,6 +43,7 @@
                 <div ng-repeat="message in messages | filter:messagesFilter">
     <!--                <div class="entry">-->
                     <div class="meta">
+                        <!--<pre>{{message | json}}</pre>-->
                         <small>{{message.posted | date: 'dd/MM/yyyy'}}</small>
                         <a ng-click="toggle(message)">
                             <span ng-show="isNew(message)" class="color">

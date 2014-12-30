@@ -1,6 +1,15 @@
 app.controller('elasMessagesController', function ($scope, $http, $q, elasBackend, $location) {
+    var communities = [];
+    communities.push($scope.me.community.href);
+    var ils = $scope.me.$$interletssettings;
+    for(var i=0; i<ils.length; i++) {
+        if(ils[i].active) {
+            communities.push(ils[i].interletsapproval.$$expanded.approved.href);
+        }
+    }
+
     elasBackend.getListResourcePaged("/persons", {
-        communities: $scope.me.community.href,
+        communities: communities.join(),
         orderby: 'firstname,lastname',
         descending: false
     }).then(function(persons) {
@@ -11,28 +20,15 @@ app.controller('elasMessagesController', function ($scope, $http, $q, elasBacken
         $scope.names = names;
     });
 
-    var communities = [];
-    communities.push($scope.me.community.href);
-    var ils = $scope.me.$$interletssettings;
-    for(var i=0; i<ils.length; i++) {
-        if(ils[i].active) {
-            communities.push(ils[i].interletsapproval.$$expanded.approved.href);
-        }
-    }
-
     elasBackend.getListResourcePaged('/messages', {
         communities: communities.join(),
         orderby: 'posted',
         descending: true
     }).then(function(list) {
-        var promises = [];
-        angular.forEach(list.results, function(message,key) {
-            promises.push(elasBackend.expandPerson(message, 'person'));
-        });
-        $q.all(promises)
-        .then(function(result) {
-            $scope.messages = result;
-        });
+        var messages = list.results;
+        return elasBackend.expand(messages, "person");
+    }).then(function(expandedMessages) {
+        $scope.messages = expandedMessages;
     });
 
     $scope.select = function(message) {

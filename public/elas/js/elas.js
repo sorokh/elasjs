@@ -153,8 +153,8 @@ app.controller('elasTransactionsController', function($scope, $http, $q, elasBac
     }).then(function(list) {
             var promises = [];
             angular.forEach(list.results, function(transaction,key) {
-                promises.push(elasBackend.expandPerson(transaction, 'fromperson'));
-                promises.push(elasBackend.expandPerson(transaction, 'toperson'));
+                promises.push(elasBackend.expand(transaction, 'fromperson'));
+                promises.push(elasBackend.expand(transaction, 'toperson'));
             });
             $q.all(promises)
                 .then(function(result) {
