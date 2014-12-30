@@ -38,7 +38,7 @@ app.controller('elasEditPersonController', function ($scope, $http, $base64, $lo
 
                     return loadMe($http, $rootScope, elasBackend);
                 }).then(function() {
-                    $location.path("/messages.html");
+                    $location.url("/messages.html");
                 }).catch(function(err) {
                     // TODO : Error handling.
                     cl(err);

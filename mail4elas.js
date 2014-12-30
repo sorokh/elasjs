@@ -100,16 +100,16 @@ function generateMailText(community, personsByPermalink, messages) {
 
 /**
  * Determine the email adresses for a given community.
- * All people in the community with mail4elas == true get the emails
- * AND all people (with mail4elas == true), that have interlets active for this community also receive the email.
+ * All people in the community with mail4elas != 'never' get the emails
+ * AND all people (with mail4elas != 'never'), that have interlets active for this community also receive the email.
  */
-function determineMailsForCommunity(community, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink) {
+function determineMailsForCommunity(community, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink, periodicity) {
     var ret = [];
 
     var persons = mapAsArray(personsByPermalink);
     for(var i=0; i<persons.length; i++) {
         var person = persons[i];
-        if(person.community.href == community.$$meta.permalink && person.email && person.mail4elas) {
+        if(person.community.href == community.$$meta.permalink && person.email && person.mail4elas == periodicity) {
             ret.push(person.email);
         }
     }
@@ -124,7 +124,7 @@ function determineMailsForCommunity(community, personsByPermalink, interletsSett
                 if(interletsSetting.interletsapproval.href == interletsApproval.$$meta.permalink && interletsSetting.active) {
                     // This person also needs to get the mail.
                     var person = personsByPermalink[interletsSetting.person.href];
-                    if(person && person.email && person.mail4elas) {
+                    if(person && person.email && person.mail4elas == periodicity) {
                         ret.push(person.email);
                         cl("added " + person.email);
                     }
@@ -151,7 +151,7 @@ function sendMailRecursive(communities, personsByPermalink, interletsSettingsByP
             var html = generateMailHtml(community, personsByPermalink, messages);
             var text = generateMailText(community, personsByPermalink, messages);
 
-            var emails = determineMailsForCommunity(community, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink);
+            var emails = determineMailsForCommunity(community, personsByPermalink, interletsSettingsByPermalink, interletsApprovalsByPermalink, 'weekly');
             cl("emails : ");
             cl(emails);
 

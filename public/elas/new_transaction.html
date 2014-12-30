@@ -41,15 +41,12 @@
                     <div class="col-md-1" ng-class="errClass('nt','amount')">
                         <input type="text" class="form-control" id="amount" name="amount" placeholder=""
                                ng-model="transaction.amount" ng-focus ng-pattern="/^[0-9]*$/" required>
-                        <span class="help-block" ng-show="errShow('nt','amount')">Geen getal.</span>
+                    </div>
+                    <div class="col-md-8" ng-class="errClass('nt','amount')">
+                        <span class="help-block" ng-show="errShow('nt','amount')">Geef het aantal punten in.</span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <div class="col-md-12 text-right">
-                        <span ng-show="!nt.$valid">Er zijn fouten in het formulier.</span>
-                    </div>
-                </div>
                 <div class="form-group">
                     <div class="col-md-12 text-right">
                         <a class="btn btn-primary" ng-click="createTransaction('nt')">Opslaan</a>

@@ -30,8 +30,9 @@
         </span>
     </div>
     <div class="col-md-6 text-right">
-        <span ng-show="me.mail4elas"><small>&nbsp;Je krijgt wekelijks een e-mail met vraag en aanbod. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}#mailsettings">Mail uitschakelen...</a></small></span>
-        <span ng-hide="me.mail4elas"><small>&nbsp;Je krijgt vraag en aanbod <strong>niet</strong> via e-mail. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}#mailsettings">Wijzigen...</a></small></span>
+        <span ng-show="me.mail4elas == 'never'"><small>&nbsp;Je krijgt vraag en aanbod <strong>niet</strong> via e-mail. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}#mailsettings">Wijzigen...</a></small></span>
+        <span ng-show="me.mail4elas == 'daily'"><small>&nbsp;Je krijgt <strong>dagelijks</strong> een e-mail met vraag en aanbod. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}#mailsettings">Wijzigen...</a></small></span>
+        <span ng-show="me.mail4elas == 'weekly'"><small>&nbsp;Je krijgt <strong>wekelijks</strong> een e-mail met vraag en aanbod. <a ng-href="#/edit_person.html?person={{me.$$meta.permalink}}#mailsettings">Wijzigen...</a></small></span>
     </div>
 </div>
 

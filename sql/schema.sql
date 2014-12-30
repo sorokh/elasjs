@@ -39,7 +39,8 @@ CREATE TABLE "persons" (
   "balance" integer not null,
   "password" character varying(64),
   "community" character varying(36) references "communities"(guid),
-  "mail4elas" boolean default true
+  -- never, daily, weekly
+  "mail4elas" character varying(6) default 'weekly'
 );
 
 CREATE TABLE "transactions" (

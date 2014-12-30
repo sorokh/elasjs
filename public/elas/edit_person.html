@@ -107,13 +107,15 @@
                 </div>
 
                 <div class="form-group" id="mailsettings">
-                    <label class="control-label col-md-3"><h4>E-mail</h4></label>
+                    <label class="control-label col-md-3"><h4>E-mail</h4><small>Stuur vraag en aanbod via e-mail</small></label>
 
-                    <div class="col-md-9">
+                    <div class="col-md-3">
                         <div>
-                            <label class="checkbox">
-                                <input type="checkbox" ng-model="person.mail4elas" name="mail4elas" id="mail4elas" /> Stuur mij wekelijks vraag en aanbod via e-mail.
-                            </label>
+                            <select class="form-control" ng-model="person.mail4elas">
+                                <option value="never">Nooit</option>
+                                <option value="daily">Dagelijks</option>
+                                <option value="weekly">Wekelijks</option>
+                            </select>
                         </div>
                     </div>
                 </div>

@@ -226,7 +226,12 @@ roa.configure(app,
                  or update triggered by the API call) will be rolled back.
                 */
                 afterupdate: [
-                    function (db, element) { $u.clearPasswordCache(); }
+                    function (db, element) {
+                        var deferred = Q.defer();
+                        $u.clearPasswordCache();
+                        deferred.resolve();
+                        return deferred.promise;
+                    }
                 ],
                 afterinsert: [],
                 afterdelete: []

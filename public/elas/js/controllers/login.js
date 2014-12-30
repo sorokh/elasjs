@@ -16,8 +16,6 @@ app.controller('elasLoginController', function ($scope, $http, $base64, $locatio
             }).then(function() {
                 var back_to_url = $location.search().back_to_url;
                 if(back_to_url) {
-                    cl("back_to_url");
-                    cl(back_to_url);
                     $location.url(back_to_url);
                 } else {
                     $location.url("/messages.html");

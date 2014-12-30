@@ -13,6 +13,9 @@ var configuration;
 var resources;
 var logsql;
 
+// For debug - makes detecting pool exhaustion easier.
+pg.defaults.poolSize=2;
+
 var pgConnect = function () {
     var deferred = Q.defer();
 
@@ -241,7 +244,9 @@ function checkBasicAuthentication(req, res, next) {
                         next();
                     } else forbidden();
                 } else {
+                    var database;
                     pgConnect().then(function (db) {
+                        database = db;
                         var q = SQL('select count(*) FROM persons');
                         q.WHERE('email = ', $(email), AND, 'password = ', $(password));
                         return pgExec(db, q).then(function (result) {
@@ -255,13 +260,14 @@ function checkBasicAuthentication(req, res, next) {
                                 forbidden();
                             }
                         });
-                    })
-                        .fail(function () {
-                            forbidden();
-                        })
-                        .fin(function () {
-                            resp.end()
-                        });
+                    }).then(function () {
+                        database.done();
+                    }).fail(function (err) {
+                        cl("checking basic authentication against database failed.");
+                        cl(err);
+                        database.done(err);
+                        forbidden();
+                    });
                 }
             } else forbidden();
         } else forbidden();
@@ -341,11 +347,14 @@ function executePutInsideTransaction(db, url, element) {
             return pgExec(db, update).then(function (results) {
                 if (mapping.afterupdate && mapping.afterupdate.length > 0) {
                     if (mapping.afterupdate.length == 1) {
+                        cl("Executing one afterupdate function...");
                         return mapping.afterupdate[0](db, element);
                     } else {
                         // TODO : Support more than one after* function.
                         cl("More than one after* function not supported yet. Ignoring");
                     }
+                } else {
+                    cl("No afterupdate functions...");
                 }
             });
         } else {
@@ -516,7 +525,7 @@ exports = module.exports = {
                         database.done(err);
                         resp.status(500).send("Internal Server Error. [" + error.toString() + "]");
                         resp.end();
-                    })
+                    });
             });
 
             // register PUT operation for inserts and updates
@@ -616,6 +625,25 @@ exports = module.exports = {
                 return pgExec(db, SQL("BEGIN")).then(function () {
                     var promises = [];
 
+                    function recurse(batch) {
+                        if(batch.length > 0) {
+                            var element = batch.pop();
+                            var url = element.href;
+                            cl("executing /batch section " + url);
+                            var body = element.body;
+                            var verb = element.verb;
+                            if(verb === "PUT") {
+                                return executePutInsideTransaction(db, url, body).then(function() {
+                                    return recurse(batch);
+                                });
+                            } else {
+                                cl("UNIMPLEMENTED - /batch ONLY SUPPORTS PUT OPERATIONS !!!");
+                                throw new Error();
+                            }
+                        }
+                    }
+
+                    /*
                     for(var i=0; i<batch.length; i++) {
                         var element = batch[i];
                         var url = element.href;
@@ -627,6 +655,9 @@ exports = module.exports = {
                     }
 
                     return Q.all(promises);
+                    */
+
+                    return recurse(batch);
                 }) // pgExec(db,SQL("BEGIN")...
                     .then(function () {
                         cl("PUT processing went OK. Committing database transaction.");

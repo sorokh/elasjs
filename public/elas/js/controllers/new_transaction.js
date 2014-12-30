@@ -21,7 +21,6 @@ app.controller('elasNewTransactionController', function ($scope, $http, $base64,
                 break;
             }
         }
-        console.log(persons);
     });
 
     $scope.transaction = { fromperson: {}, toperson: {} };
@@ -36,7 +35,7 @@ app.controller('elasNewTransactionController', function ($scope, $http, $base64,
                 .then(function ok(resp) {
                     var cache = $cacheFactory.get('$http');
                     cache.removeAll();
-                    $location.path("/transactions.html");
+                    $location.url("/transactions.html");
                 }, function failed(err) {
                     console.log(err);
                 });
@@ -44,7 +43,7 @@ app.controller('elasNewTransactionController', function ($scope, $http, $base64,
     };
 
     $scope.errClass = function(formname,fieldname) {
-        hasError = errShow(formname,fieldname);
+        hasError = $scope.errShow(formname,fieldname);
         if(hasError) {
             return 'has-error';
         } else {
@@ -59,5 +58,5 @@ app.controller('elasNewTransactionController', function ($scope, $http, $base64,
         } else {
             return false;
         }
-    }
+    };
 });
