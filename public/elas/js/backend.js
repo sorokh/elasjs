@@ -303,15 +303,5 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
         return $q.all(promises);
     };
 
-    that.log = function (message) {
-        $http({
-            method: 'PUT',
-            url: '/log',
-            data: {message: message},
-            contentType: 'application/json',
-            dataType: 'json'
-        });
-    };
-
     return that;
 }]);

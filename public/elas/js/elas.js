@@ -262,3 +262,26 @@ app.config(['$routeProvider',
             }
         });
     }]);
+
+app.factory('$exceptionHandler', ['$log', function($log) {
+    return function(exception, cause) {
+        var o = {};
+        if(exception && exception.message) {
+            o.message = exception.message;
+        }
+        if(exception && exception.stack) {
+            o.stack = exception.stack;
+        }
+
+        $log.error.apply($log, [exception, cause]);
+        $.ajax({
+            url: '/log',
+            type: 'PUT',
+            data: JSON.stringify(o),
+            contentType: 'application/json',
+            success: function(result) {
+                cl("Unhandled exception has been sent to /log.");
+            }
+        });
+    };
+}]);

@@ -147,7 +147,7 @@ roa.configure(app,
 
                  - onupdate : is executed before UPDATE on the table
                  - oninsert : is executed before INSERT into the table
-                 - onread : is executed after SELECT from then table
+                 - onread : is executed after SELECT from the table
 
                  All 3 receive 2 parameters :
                  - the key they were registered on.

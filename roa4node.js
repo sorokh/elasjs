@@ -619,6 +619,7 @@ exports = module.exports = {
         app.put('/batch', function(req, resp) {
             // An array of objects with 'href', 'verb' and 'body'
             var batch = req.body;
+            batch.reverse();
 
             pgConnect().then(function (db) {
                 return pgExec(db, SQL("BEGIN")).then(function () {
@@ -641,20 +642,6 @@ exports = module.exports = {
                             }
                         }
                     }
-
-                    /*
-                    for(var i=0; i<batch.length; i++) {
-                        var element = batch[i];
-                        var url = element.href;
-                        var body = element.body;
-                        var verb = element.verb;
-                        if(verb === "PUT") {
-                            promises.push(executePutInsideTransaction(db, url, body));
-                        }
-                    }
-
-                    return Q.all(promises);
-                    */
 
                     return recurse(batch);
                 }) // pgExec(db,SQL("BEGIN")...
@@ -723,6 +710,16 @@ exports = module.exports = {
                     resp.end();
                 });
             }
+        });
+
+        app.put('/log', function (req, resp) {
+            var error = req.body;
+            cl("Client side error :");
+            var lines = error.stack.split("\n");
+            for(var i=0; i<lines.length; i++) {
+                cl(lines[i]);
+            }
+            resp.end();
         });
     },
 
