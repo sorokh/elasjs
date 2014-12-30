@@ -34,7 +34,6 @@ app.controller('elasEditPersonController', function ($scope, $http, $base64, $lo
                 .then(function ok(resp) {
                     var cache = $cacheFactory.get('$http');
                     cache.removeAll();
-                    elasBackend.removePersonFromExpandCache($scope.person.$$meta.permalink);
 
                     return loadMe($http, $rootScope, elasBackend);
                 }).then(function() {
