@@ -9,7 +9,6 @@
   "dependencies": {
     "express": "~4.9.x",
     "pg": "2.x",
-    "sqlbits": "~2.1.0",
     "body-parser": "~1.9.0",
     "jsonschema": "~1.0.0",
     "q": "~1.0.1",
