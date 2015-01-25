@@ -466,10 +466,8 @@ function executePutInsideTransaction(db, url, element) {
             var insert = prepare("insert-"+ table);
             insert.sql('insert into ' + table + ' (').columns(element).sql(') values (').object(element).sql(') ');
             return pgExec(db, insert).then(function (results) {
-                cl(mapping.afterinsert);
                 if (mapping.afterinsert && mapping.afterinsert.length > 0) {
                     if (mapping.afterinsert.length == 1) {
-                        cl("exec afterinsert");
                         return mapping.afterinsert[0](db, element);
                     } else {
                         // TODO : Support more than one after* function.
