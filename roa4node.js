@@ -1,8 +1,8 @@
 var pg = require('pg');
-var bits = require('sqlbits');
 var validator = require('jsonschema').Validator;
 var Q = require("q");
 
+var bits = require('sqlbits');
 var SQL = bits.SQL;
 var $ = bits.$;
 var AND = bits.AND;
@@ -13,11 +13,15 @@ var configuration;
 var resources;
 var logsql;
 
+// node-postgres defaults to 10 clients in the pool, but heroku.com allows 20.
 pg.defaults.poolSize=20;
 
+// Q wrapper to get a node-postgres client from the client pool.
+// It returns a Q promise to allow chaining, error handling, etc.. in Q-style.
 var pgConnect = function () {
     var deferred = Q.defer();
 
+    // ssl=true is required for heruko.com
     pg.connect(process.env.DATABASE_URL + "?ssl=true", function (err, client, done) {
         if (err) {
             deferred.reject(err);
@@ -33,7 +37,9 @@ var pgConnect = function () {
     return deferred.promise;
 };
 
-var pgExec = function (db, bitsquery) {
+// Q wrapper for executing sql-bits queries on a node-postgres client.
+// It returns a Q promise to allow chaining, error handling, etc.. in Q-style.
+var pgExecSQLBits = function (db, bitsquery) {
     var deferred = Q.defer();
 
     var sql = bitsquery.sql;
@@ -48,13 +54,13 @@ var pgExec = function (db, bitsquery) {
     db.client.query(sql, params, function (err, result) {
         if (err) {
             if (logsql) {
-                cl("SQL error, removing postgres client from pool.");
+                cl("SQL error :");
                 cl(err);
             }
             deferred.reject(err);
         } else {
             if (logsql) {
-                cl("sql result : ");
+                cl("SQL result : ");
                 cl(result.rows);
             }
             deferred.resolve(result);
@@ -64,6 +70,84 @@ var pgExec = function (db, bitsquery) {
     return deferred.promise;
 };
 
+// Q wrapper for executing SQL statement on a node-postgres client.
+//
+// It does not use SQL bits. Instead the passed in query object is a node-postgres Query config object.
+// See : https://github.com/brianc/node-postgres/wiki/Client#method-query-prepared.
+//
+// name : the name for caching as prepared statement, if desired.
+// text : The SQL statement, use $1,$2, etc.. for adding paramters.
+// value : An array of java values to be inserted in $1,$2, etc..
+//
+// It returns a Q promise to allow chaining, error handling, etc.. in Q-style.
+var pgExec = function (db, query) {
+    var deferred = Q.defer();
+
+    if (logsql) {
+        cl(query);
+    }
+
+    db.client.query(query, function (err, result) {
+        if (err) {
+            if (logsql) {
+                cl("SQL error :");
+                cl(err);
+            }
+            deferred.reject(err);
+        } else {
+            if (logsql) {
+                cl("SQL result : ");
+                cl(result.rows);
+            }
+            deferred.resolve(result);
+        }
+    });
+
+    return deferred.promise;
+};
+
+// Creates a config object for q node-postgres prepared statement.
+// It also adds some convenience functions for handling appending of SQL and parameters.
+var prepare = function(name) {
+    return {
+        name: name,
+        text: '',
+        values: [],
+        param: function(x) {
+            // Convenience function for adding a parameter to the text, it
+            // automatically adds $x to the SQL text, and adds the supplied value
+            // to the 'value'-array.
+            var index = this.values.length + 1;
+            this.values.push(x);
+            this.text = this.text + "$" + index;
+
+            return this;
+        },
+        sql: function(x) {
+            // Convenience function for adding a parameter to the SQL statement.
+            this.text = this.text + x;
+
+            return this;
+        },
+        array: function(x) {
+            // Convenience function for adding an array of values to a SQL statement.
+            // The values are added comma-separated.
+
+            if(x && x.length && x.length > 0) {
+                for(var i=0; i< x.length; i++) {
+                    this.param(x[i]);
+                    if (i < (x.length - 1)) {
+                        this.text = this.text + ',';
+                    }
+                }
+            }
+
+            return this;
+        }
+    }
+};
+
+// Converts the configuration object for roa4node into an array per resource type.
 var typeToConfig = function(config) {
     var ret = {};
     for (var i = 0; i < config.length; i++) {
@@ -72,6 +156,7 @@ var typeToConfig = function(config) {
     return ret;
 };
 
+// Create a ROA resource, based on a row result from node-postgres.
 function mapColumnsToObject(config, mapping, row, element) {
     var typeToMapping = typeToConfig(config);
 
@@ -109,7 +194,7 @@ function sqlColumnNames(mapping) {
     return sqlColumnNames;
 }
 
-// apply extra parameters on request URL to select.
+// apply extra parameters on request URL for a list-resource to a sql-bits select.
 function applyRequestParameters(mapping, req, select) {
     var urlparameters = req.query;
 
@@ -120,9 +205,11 @@ function applyRequestParameters(mapping, req, select) {
             if (urlparameters.hasOwnProperty(key)) {
                 if (standard_parameters.indexOf(key) == -1) {
                     if (mapping.query[key]) {
+                        // Execute the configured function that will apply this URL parameter
+                        // to the sql-bits SELECT statement
                         mapping.query[key](urlparameters[key], select);
                     } else {
-                        console.log("Unknown query parameter [" + key + "]. Ignoring..");
+                        cl("Unknown query parameter [" + key + "]. Ignoring..");
                     }
                 }
             }
@@ -130,6 +217,7 @@ function applyRequestParameters(mapping, req, select) {
     }
 }
 
+// Execute registered mapping functions for elements of a ROA resource.
 function executeOnFunctions(config, mapping, ontype, element) {
     for (var key in mapping.map) {
         if (mapping.map.hasOwnProperty(key)) {
@@ -144,8 +232,8 @@ function queryByGuid(config, db, mapping, guid) {
     var columns = sqlColumnNames(mapping);
     var table = mapping.type.split("/")[1];
 
-    var query = SQL('select ' + columns + ' FROM "' + table + '"');
-    query.WHERE('"guid" = ', $(guid));
+    var query = prepare('select-row-by-guid-from-' + table);
+    query.sql('select ' + columns + ' from "' + table + '" where "guid" = ').param(guid);
 
     return pgExec(db, query).then(function (result) {
         var row = result.rows[0];
@@ -209,6 +297,8 @@ function cl(x) {
     console.log(x);
 }
 
+// Security cache; stores a map 'e-mail' -> 'password'
+// To avoid a database query for all API calls.
 var knownPasswords = {};
 
 // Force https in production.
@@ -246,8 +336,10 @@ function checkBasicAuthentication(req, res, next) {
                     var database;
                     pgConnect().then(function (db) {
                         database = db;
-                        var q = SQL('select count(*) FROM persons');
-                        q.WHERE('email = ', $(email), AND, 'password = ', $(password));
+
+                        var q = prepare("select-count-from-persons-where-email-and-password");
+                        q.sql('select count(*) from persons where email = ').param(email).sql(' and password = ').param(password);
+
                         return pgExec(db, q).then(function (result) {
                             var count = parseInt(result.rows[0].count);
                             if (count == 1) {
@@ -273,6 +365,8 @@ function checkBasicAuthentication(req, res, next) {
     } else forbidden();
 }
 
+// Apply CORS headers.
+// TODO : Change temporary URL into final deploy URL.
 var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', 'https://sheltered-lowlands-3555.herokuapp.com');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
@@ -335,7 +429,8 @@ function executePutInsideTransaction(db, url, element) {
         }
     }
 
-    var countquery = SQL('select count(*) from ' + table).WHERE('"guid" = ', $(guid));
+    var countquery = prepare('check-resource-exists-' + table);
+    countquery.sql('select count(*) from ' + table + ' where "guid" = ').param(guid);
     return pgExec(db, countquery).then(function (results) {
         var deferred = Q.defer();
 
@@ -343,7 +438,7 @@ function executePutInsideTransaction(db, url, element) {
             executeOnFunctions(resources, mapping, "onupdate", element);
 
             var update = UPDATE(table).SET(element)._('where guid=', $(guid));
-            return pgExec(db, update).then(function (results) {
+            return pgExecSQLBits(db, update).then(function (results) {
                 if (mapping.afterupdate && mapping.afterupdate.length > 0) {
                     if (mapping.afterupdate.length == 1) {
                         cl("Executing one afterupdate function...");
@@ -361,7 +456,7 @@ function executePutInsideTransaction(db, url, element) {
             executeOnFunctions(resources, mapping, "oninsert", element);
 
             var insert = INSERT.INTO(table, element);
-            return pgExec(db, insert).then(function (results) {
+            return pgExecSQLBits(db, insert).then(function (results) {
                 if (mapping.afterinsert && mapping.afterinsert.length > 0) {
                     if (mapping.afterinsert.length == 1) {
                         return mapping.afterinsert[0](db, element);
@@ -414,14 +509,16 @@ exports = module.exports = {
                 var columns = sqlColumnNames(mapping);
                 var table = mapping.type.split("/")[1];
 
-                var countquery = SQL('select count(*) FROM "' + table + '"');
+                var countquery = prepare();
+                countquery.sql('select count(*) from "' + table + '" where 1=1 ');
                 applyRequestParameters(mapping, req, countquery);
                 var database;
                 pgConnect().then(function (db) {
                     database = db;
                     return pgExec(db, countquery).then(function (results) {
                         var count = parseInt(results.rows[0].count);
-                        var query = SQL('select ' + columns + ' FROM "' + table + '"');
+                        var query = prepare();
+                        query.sql('select ' + columns + ' from "' + table + '" where 1=1 ');
                         applyRequestParameters(mapping, req, query);
 
                         // All list resources support orderby, limit and offset.
@@ -438,15 +535,15 @@ exports = module.exports = {
                                 }
                             }
                             if (valid) {
-                                query._("ORDER BY " + orders);
-                                if (descending) query._("DESC");
+                                query.sql(" order by " + orders);
+                                if (descending) query.sql(" desc");
                             } else {
                                 cl("Can not order by [" + orderby + "]. One or more unknown properties. Ignoring orderby.");
                             }
                         }
 
-                        if (req.query.limit) query.LIMIT(req.query.limit);
-                        if (req.query.offset) query.OFFSET(req.query.offset);
+                        if (req.query.limit) query.sql(" limit ").param(req.query.limit);
+                        if (req.query.offset) query.sql(" offset ").param(req.query.offset);
 
                         return pgExec(db, query).then(function (result) {
                             var rows = result.rows;
@@ -535,7 +632,9 @@ exports = module.exports = {
             app.put(url, function (req, resp) {
                 var url = req.path;
                 pgConnect().then(function (db) {
-                    return pgExec(db, SQL("BEGIN")).then(function () {
+                    var begin = prepare("begin-transaction");
+                    begin.sql('BEGIN');
+                    return pgExec(db, begin).then(function () {
                         return executePutInsideTransaction(db, url, req.body);
                     }) // pgExec(db,SQL("BEGIN")...
                         .then(function () {
@@ -574,8 +673,11 @@ exports = module.exports = {
                 var table = mapping.type.split("/")[1];
 
                 pgConnect().then(function (db) {
-                    return pgExec(db, SQL("BEGIN")).then(function () {
-                        var deletequery = bits.DELETE.FROM(table)._("WHERE guid = ", bits.$(req.params.guid));
+                    var begin = prepare("begin-transaction");
+                    begin.sql("BEGIN");
+                    return pgExec(db, begin).then(function () {
+                        var deletequery = prepare("delete-by-guid-" + table);
+                        deletequery.sql('delete from "' + table + '" where "guid" = ').param(req.params.guid);
 
                         return pgExec(db, deletequery).then(function (results) {
                             if (results.rowCount == 1) {
@@ -622,7 +724,9 @@ exports = module.exports = {
             batch.reverse();
 
             pgConnect().then(function (db) {
-                return pgExec(db, SQL("BEGIN")).then(function () {
+                var begin = prepare('begin-transaction');
+                begin.sql("BEGIN");
+                return pgExec(db, begin).then(function () {
                     var promises = [];
 
                     function recurse(batch) {
@@ -682,8 +786,8 @@ exports = module.exports = {
             var firstColonIndex = decoded.indexOf(':');
             if (firstColonIndex != -1) {
                 var email = decoded.substr(0, firstColonIndex);
-                var query = SQL('select ' + columns + ',guid FROM ' + table);
-                query.WHERE('email = ', $(email));
+                var query = prepare('me');
+                query.sql('select ' + columns + ',guid from ' + table + ' where email = ').param(email);
 
                 var database;
                 pgConnect().then(function (db) {

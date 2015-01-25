@@ -20,104 +20,44 @@ var cl = function(x) {
     console.log(x);
 };
 
-var filterOnCommunities = function(value, select) {
-    var syntax = function() {
-        cl("ignoring parameter [communities] - syntax error. ["+ value + "]");
-    };
+// createInClause("communities", "community");
+// createInClause("persons", "person");
+// createInClause("communities", "approved");
+var filterReferencedType = function(resourcetype, columnname) {
+    return function(value, query) {
+        var syntax = function() {
+            cl("ignoring parameter [' + resourcetype + '] - syntax error. [" + value + "]");
+        };
 
-    if(value) {
-        var permalinks = value.split(",");
-        var guids = [];
-        for(var i=0; i<permalinks.length; i++) {
-            if(permalinks[i].indexOf("/communities/") == 0) {
-                var guid = permalinks[i].substr(13);
-                if(guid.length == 36) {
-                    guids.push(guid);
+        if(value) {
+            var permalinks = value.split(",");
+            var guids = [];
+            for(var i=0; i<permalinks.length; i++) {
+                if(permalinks[i].indexOf("/" + resourcetype + "/") == 0) {
+                    var guid = permalinks[i].substr(resourcetype.length + 2);
+                    if(guid.length == 36) {
+                        guids.push(guid);
+                    } else {
+                        syntax();
+                        return;
+                    }
                 } else {
                     syntax();
                     return;
                 }
+            }
+            if(guid.length == 36) {
+                query.sql(' and ' + columnname + ' in (').array(guids).sql(') ');
             } else {
                 syntax();
                 return;
             }
-        }
-        if(guid.length == 36) {
-            select.WHERE('community').IN(guids);
-        } else {
-            syntax();
-            return;
-        }
-    }
-};
-
-var filterOnApproved = function(value, select) {
-    var syntax = function() {
-        cl("ignoring parameter [approved] - syntax error. ["+ value + "]");
-    };
-
-    if(value) {
-        var permalinks = value.split(",");
-        var guids = [];
-        for(var i=0; i<permalinks.length; i++) {
-            if(permalinks[i].indexOf("/communities/") == 0) {
-                var guid = permalinks[i].substr(13);
-                if(guid.length == 36) {
-                    guids.push(guid);
-                } else {
-                    syntax();
-                    return;
-                }
-            } else {
-                syntax();
-                return;
-            }
-        }
-        if(guid.length == 36) {
-            select.WHERE('approved').IN(guids);
-        } else {
-            syntax();
-            return;
-        }
-    }
-};
-
-var filterOnPerson = function(value, select) {
-    var syntax = function() {
-        cl("ignoring parameter - syntax error. ["+ value + "]");
-    };
-
-    if(value) {
-        var permalinks = value.split(",");
-        var guids = [];
-        for(var i=0; i<permalinks.length; i++) {
-            if(permalinks[i].indexOf("/persons/") == 0) {
-                var guid = permalinks[i].substr(9);
-                if(guid.length == 36) {
-                    guids.push(guid);
-                } else {
-                    syntax();
-                    return;
-                }
-            } else {
-                syntax();
-                return;
-            }
-        }
-        if(guid.length == 36) {
-            select.WHERE('person').IN(guids);
-        } else {
-            syntax();
-            return;
         }
     }
 };
 
 var messagesPostedSince = function(value, select) {
-    cl("Apply postedSince filter...");
-    cl(value);
-    cl(select);
-    select.WHERE('posted > ').SQL(value);
+    select.sql(' and posted > ').param(value);
 };
 
 
@@ -204,11 +144,16 @@ roa.configure(app,
                 // All queries are URLs. Any allowed URL parameter is configured here. A function can be registered.
                 // This function receives 2 parameters :
                 //  - the value of the request parameter (string)
-                //  - a SQLbits SELECT object.
-
+                //  - An object for adding SQL to the WHERE clause. This object has 2 methods :
+                //      * sql() : A method for appending sql.
+                //      * param() : A method for appending a parameter to the text sql.
+                //      * array() : A method for appending an array of parameters to the sql. (comma-separated)
+                //  All these methods can be chained, so a simple fluent interface exists.
+                //
+                //  All the supplied functions MUST extend the SQL statement with an 'AND' clause.
+                // (or not touch the statement, if they want to skip their processing).
                 query: {
-                    // TODO : Should be inside an bits.AND() construction with default condition (1=1 AND ...)
-                    communities: filterOnCommunities
+                    communities: filterReferencedType('communities','community')
                 },
                 /*
                 Hooks for psot-processing can be registered to perform desired things, like clear a cache,
@@ -284,7 +229,7 @@ roa.configure(app,
                     required: ["person","type","title","community"]
                 },
                 query: {
-                    communities: filterOnCommunities,
+                    communities: filterReferencedType("communities","community"),
                     postedSince: messagesPostedSince
                 }
             },
@@ -397,7 +342,7 @@ roa.configure(app,
                     approved: $s.permalink("/communities")
                 },
                 query : {
-                    approved: filterOnApproved
+                    approved: filterReferencedType("communities","approved")
                 },
                 beforeinsert : [],
                 beforeupdate : [],
@@ -426,7 +371,7 @@ roa.configure(app,
                 },
                 validate: [],
                 query : {
-                    person : filterOnPerson
+                    person : filterReferencedType("persons","person")
                 },
                 beforeinsert : [],
                 beforeupdate : [],
