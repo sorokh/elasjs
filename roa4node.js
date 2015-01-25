@@ -2,13 +2,6 @@ var pg = require('pg');
 var validator = require('jsonschema').Validator;
 var Q = require("q");
 
-var bits = require('sqlbits');
-var SQL = bits.SQL;
-var $ = bits.$;
-var AND = bits.AND;
-var INSERT = bits.INSERT;
-var UPDATE = bits.UPDATE;
-
 var configuration;
 var resources;
 var logsql;
@@ -31,39 +24,6 @@ var pgConnect = function () {
                 done: done,
                 bits: bits
             });
-        }
-    });
-
-    return deferred.promise;
-};
-
-// Q wrapper for executing sql-bits queries on a node-postgres client.
-// It returns a Q promise to allow chaining, error handling, etc.. in Q-style.
-var pgExecSQLBits = function (db, bitsquery) {
-    var deferred = Q.defer();
-
-    var sql = bitsquery.sql;
-    var params = bitsquery.params;
-
-    if (logsql) {
-        cl("sql : " + sql);
-        cl("parameters : ");
-        cl(params);
-    }
-
-    db.client.query(sql, params, function (err, result) {
-        if (err) {
-            if (logsql) {
-                cl("SQL error :");
-                cl(err);
-            }
-            deferred.reject(err);
-        } else {
-            if (logsql) {
-                cl("SQL result : ");
-                cl(result.rows);
-            }
-            deferred.resolve(result);
         }
     });
 
@@ -139,6 +99,43 @@ var prepare = function(name) {
                     if (i < (x.length - 1)) {
                         this.text = this.text + ',';
                     }
+                }
+            }
+
+            return this;
+        },
+        columns: function(o) {
+            // Convenience function for adding all keys in an object (comma-separated)
+            var columnNames = [];
+
+            for (var key in o) {
+                if (o.hasOwnProperty(key)) {
+                    columnNames.push(key);
+                }
+            }
+            var sqlColumnNames = '';
+            for (var j = 0; j < columnNames.length; j++) {
+                sqlColumnNames += columnNames[j];
+                if (j < columnNames.length - 1) {
+                    sqlColumnNames += ",";
+                }
+            }
+            this.text = this.text + sqlColumnNames;
+
+            return this;
+        },
+        object: function(o) {
+            // Convenience function for adding all values of an object as parameters.
+            // Same iteration order as 'columns'.
+            var firstcolumn = true;
+            for (var key in o) {
+                if (o.hasOwnProperty(key)) {
+                    if(!firstcolumn) {
+                        this.text += ",";
+                    } else {
+                        firstcolumn = false;
+                    }
+                    this.param(o[key]);
                 }
             }
 
@@ -437,8 +434,23 @@ function executePutInsideTransaction(db, url, element) {
         if (results.rows[0].count == 1) {
             executeOnFunctions(resources, mapping, "onupdate", element);
 
-            var update = UPDATE(table).SET(element)._('where guid=', $(guid));
-            return pgExecSQLBits(db, update).then(function (results) {
+            var update = prepare('update-' + table);
+            update.sql('update ' + table + ' set ');
+            var firstcolumn = true;
+            for (var key in element) {
+                if (element.hasOwnProperty(key)) {
+                    if(!firstcolumn) {
+                        update.sql(',');
+                    } else {
+                        firstcolumn = false;
+                    }
+
+                    update.sql(key + '=').param(element[key]);
+                }
+            }
+            update.sql(" where guid = ").param(guid);
+
+            return pgExec(db, update).then(function (results) {
                 if (mapping.afterupdate && mapping.afterupdate.length > 0) {
                     if (mapping.afterupdate.length == 1) {
                         cl("Executing one afterupdate function...");
@@ -455,8 +467,9 @@ function executePutInsideTransaction(db, url, element) {
             element.guid = guid;
             executeOnFunctions(resources, mapping, "oninsert", element);
 
-            var insert = INSERT.INTO(table, element);
-            return pgExecSQLBits(db, insert).then(function (results) {
+            var insert = prepare("insert-"+ table);
+            insert.sql('insert into ' + table + ' (').columns(element).sql(') values (').object(element).sql(') ');
+            return pgExec(db, insert).then(function (results) {
                 if (mapping.afterinsert && mapping.afterinsert.length > 0) {
                     if (mapping.afterinsert.length == 1) {
                         return mapping.afterinsert[0](db, element);

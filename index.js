@@ -73,8 +73,7 @@ var clearPasswordCache = function (db, element) {
 
 roa.configure(app,
     {
-//        logsql : true,
-        logsql : false,
+        logsql : true,
         resources : [
             {
                 // Base url, maps 1:1 with a table in postgres (same name, except the '/' is removed)
