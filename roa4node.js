@@ -18,8 +18,7 @@ var pgConnect = function () {
         } else {
             deferred.resolve({
                 client: client,
-                done: done,
-                bits: bits
+                done: done
             });
         }
     });
@@ -29,12 +28,12 @@ var pgConnect = function () {
 
 // Q wrapper for executing SQL statement on a node-postgres client.
 //
-// It does not use SQL bits. Instead the passed in query object is a node-postgres Query config object.
+// Instead the db object is a node-postgres Query config object.
 // See : https://github.com/brianc/node-postgres/wiki/Client#method-query-prepared.
 //
 // name : the name for caching as prepared statement, if desired.
-// text : The SQL statement, use $1,$2, etc.. for adding paramters.
-// value : An array of java values to be inserted in $1,$2, etc..
+// text : The SQL statement, use $1,$2, etc.. for adding parameters.
+// values : An array of java values to be inserted in $1,$2, etc..
 //
 // It returns a Q promise to allow chaining, error handling, etc.. in Q-style.
 var pgExec = function (db, query) {
@@ -188,7 +187,7 @@ function sqlColumnNames(mapping) {
     return sqlColumnNames;
 }
 
-// apply extra parameters on request URL for a list-resource to a sql-bits select.
+// apply extra parameters on request URL for a list-resource to a sselect.
 function applyRequestParameters(mapping, req, select) {
     var urlparameters = req.query;
 
@@ -200,7 +199,7 @@ function applyRequestParameters(mapping, req, select) {
                 if (standard_parameters.indexOf(key) == -1) {
                     if (mapping.query[key]) {
                         // Execute the configured function that will apply this URL parameter
-                        // to the sql-bits SELECT statement
+                        // to the SELECT statement
                         mapping.query[key](urlparameters[key], select);
                     } else {
                         cl("Unknown query parameter [" + key + "]. Ignoring..");
