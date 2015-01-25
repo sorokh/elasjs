@@ -79,7 +79,7 @@ var clearPasswordCache = function (db, element) {
 roa.configure(app,pg,
     {
         // For debugging SQL can be logged.
-        logsql : false,
+        logsql : true,
         resources : [
             {
                 // Base url, maps 1:1 with a table in postgres (same name, except the '/' is removed)
@@ -310,13 +310,15 @@ roa.configure(app,pg,
                 },
                 afterinsert : [
                     function(db, element) {
-                        var bits = db.bits;
                         var amount = element.amount;
                         var fromguid = element.fromperson;
                         var toguid = element.toperson;
-                        var updatefrom = bits.SQL("UPDATE persons SET balance = (balance - ", bits.$(amount), ") where guid = ", bits.$(fromguid));
+
+                        var updatefrom = $u.prepareSQL();
+                        updatefrom.sql('update persons set balance = (balance - ').param(amount).sql(') where guid = ').param(fromguid);
                         return $u.executeSQL(db,updatefrom).then(function() {
-                            var updateto = bits.SQL("UPDATE persons SET balance = (balance + ", bits.$(amount), ") where guid = ", bits.$(toguid));
+                            var updateto = $u.prepareSQL();
+                            updateto.sql('update persons set balance = (balance + ').param(amount).sql(') where guid = ').param(toguid);
                             return $u.executeSQL(db,updateto);
                         });
                     }
