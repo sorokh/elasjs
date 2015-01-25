@@ -2,6 +2,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var Q = require("q");
+var pg = require('pg');
 
 // Local includes
 var roa = require("./roa4node.js");
@@ -19,6 +20,9 @@ app.use(express.static(__dirname + '/public/'));
 var cl = function(x) {
     console.log(x);
 };
+
+// node-postgres defaults to 10 clients in the pool, but heroku.com allows 20.
+pg.defaults.poolSize=20;
 
 // createInClause("communities", "community");
 // createInClause("persons", "person");
@@ -71,9 +75,11 @@ var clearPasswordCache = function (db, element) {
     return deferred.promise;
 }
 
-roa.configure(app,
+// Need to pass in express.js and node-postgress as dependencies.
+roa.configure(app,pg,
     {
-        logsql : true,
+        // For debugging SQL can be logged.
+        logsql : false,
         resources : [
             {
                 // Base url, maps 1:1 with a table in postgres (same name, except the '/' is removed)

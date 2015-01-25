@@ -1,13 +1,10 @@
-var pg = require('pg');
 var validator = require('jsonschema').Validator;
 var Q = require("q");
 
 var configuration;
 var resources;
 var logsql;
-
-// node-postgres defaults to 10 clients in the pool, but heroku.com allows 20.
-pg.defaults.poolSize=20;
+var pg;
 
 // Q wrapper to get a node-postgres client from the client pool.
 // It returns a Q promise to allow chaining, error handling, etc.. in Q-style.
@@ -485,10 +482,11 @@ function executePutInsideTransaction(db, url, element) {
 
 /* express.js application, configuration for roa4node */
 exports = module.exports = {
-    configure: function (app, config) {
+    configure: function (app, postgres, config) {
         configuration = config;
         resources = config.resources;
         logsql = config.logsql;
+        pg = postgres;
 
         app.use(forceSecureSockets);
         app.use(logRequests);
