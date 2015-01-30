@@ -1,3 +1,7 @@
+/*
+  The core server for the REST api.
+  It is configurable, and provides a simple framework for creating REST interfaces.
+*/
 var validator = require('jsonschema').Validator;
 var Q = require("q");
 
