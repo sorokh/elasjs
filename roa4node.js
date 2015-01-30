@@ -16,7 +16,16 @@ var pgConnect = function () {
     var deferred = Q.defer();
 
     // ssl=true is required for heruko.com
-    pg.connect(process.env.DATABASE_URL + "?ssl=true", function (err, client, done) {
+    // ssl=false is required for development on local postgres (Cloud9)
+    var dbUrl;
+    if(process.env.DATABASE_URL) {
+        dbUrl = process.env.DATABASE_URL + "?ssl=true";
+    } else {
+        dbUrl = "postgres://elasng:elasng@localhost:5432/postgres"
+    }
+    cl("Using database connection string : [" + dbUrl + "]");
+    
+    pg.connect(dbUrl, function (err, client, done) {
         if (err) {
             deferred.reject(err);
         } else {
