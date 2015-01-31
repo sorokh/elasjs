@@ -153,7 +153,7 @@ roa.configure(app,pg,
                 //      * sql() : A method for appending sql.
                 //      * param() : A method for appending a parameter to the text sql.
                 //      * array() : A method for appending an array of parameters to the sql. (comma-separated)
-                //  All these methods can be chained, so a simple fluent interface exists.
+                //  All these methods can be chained, as a simple fluent interface.
                 //
                 //  All the supplied functions MUST extend the SQL statement with an 'AND' clause.
                 // (or not touch the statement, if they want to skip their processing).
@@ -170,11 +170,11 @@ roa.configure(app,pg,
 
                 These post-processing functions receive 2 arguments:
 
-                 - a 'db' object, that can be used to call roa4node.executeSQL, with a valid SQLbits statement.
+                 - a 'db' object, that can be used to call roa4node.executeSQL.
                    This object contains 3 things :
                     - client : a pg-connect client object
                     - done : a pg-connect done function
-                    - bits : a reference to SQLbits
+                   You can prepare a SQL statement by using roa4node.prepareSQL(db)
 
                  - the element that was just updated / created.
 
