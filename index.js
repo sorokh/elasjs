@@ -131,7 +131,7 @@ roa.configure(app,pg,
                     title: "An object representing a person taking part in the LETS system.",
                     type: "object",
                     properties : {
-                        firstname: $s.string(1,2/*128*/,"First name of the person."),
+                        firstname: $s.string(1,128,"First name of the person."),
                         lastname: $s.string(1,128,"Last name of the person."),
                         street: $s.string(1,256,"Streetname of the address of residence."),
                         streetnumber: $s.string(1,16,"Street number of the address of residence."),
