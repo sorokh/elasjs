@@ -162,6 +162,7 @@ angular.module('elasApp').factory('elasBackend', ['$http', '$q', '$notification'
 
             defer.resolve(resp);
         }).error(function(error) {
+            cl("createOrUpdateResource failed, rejecting promise.");
                 // TODO : Root error, send to /log + message to the user...
             defer.reject(error);
         });

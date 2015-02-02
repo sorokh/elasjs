@@ -29,7 +29,8 @@ app.controller('elasEditMessageController', function ($scope, $http, $base64, $l
                     cache.removeAll();
                     $location.url("/messages.html");
                 }, function failed(err) {
-                    console.log(err);
+                    cl("Update failed");
+                    cl(err);
                 });
         }
     };
