@@ -206,6 +206,10 @@ app.config(['$routeProvider',
                 templateUrl: 'login.html',
                 controller: 'elasLoginController'
             }).
+            when('/register.html', {
+                templateUrl: 'register.html',
+                controller: 'elasRegisterController'
+            }).
             when('/messages.html', {
                 templateUrl: 'messages.html',
                 controller: 'elasMessagesController'
@@ -244,6 +248,8 @@ app.config(['$routeProvider',
     function ($rootScope, $location, $http, $base64) {
         function is_public_url($location) {
             if($location.path() == '/edit_community.html') {
+                return true;
+            } else if($location.path() == '/register.html') {
                 return true;
             }
         }

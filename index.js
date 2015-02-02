@@ -128,16 +128,24 @@ roa.configure(app,pg,
                 // Validation phase 1 is schema validation.
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    firstname: $s.string(1,128),
-                    lastname: $s.string(1,128),
-                    street: $s.string(1,256),
-                    streetnumber: $s.string(1,16),
-                    streetbus: $s.string(1,16),
-                    zipcode: $s.zipcode,
-                    city: $s.string(1,64),
-                    phone: $s.phone,
-                    email: $s.email,
-                    mail4elas: $s.boolean,
+                    title: "An object representing a person taking part in the LETS system.",
+                    type: "object",
+                    properties : {
+                        firstname: $s.string(1,128,"First name of the person."),
+                        lastname: $s.string(1,128,"Last name of the person."),
+                        street: $s.string(1,256,"Streetname of the address of residence."),
+                        streetnumber: $s.string(1,16,"Street number of the address of residence."),
+                        streetbus: $s.string(1,16,"Postal box of the address of residence."),
+                        zipcode: $s.zipcode("4 digit postal code of the city for the address of residence."),
+                        city: $s.string(1,64,"City for the address of residence."),
+                        phone: $s.phone("The telephone number for this person. Can be a fixed or mobile phone number."),
+                        email: $s.email("The email address the person can be reached on. It should be unique to this person. The email should not be shared with others."),
+                        mail4elas: {
+                            type: "string",
+                            description: "Describes if, and how often this person wants messages to be emailed.",
+                            enum: ["never","daily","weekly","instant"]
+                        }
+                    },
                     // balance should not be validated. It can never be PUT ! If PUT, it is ignored. See above.
                     required: ["firstname","lastname","street","streetnumber","zipcode","city", "mail4elas"]
                 },
@@ -161,7 +169,7 @@ roa.configure(app,pg,
                     communities: filterReferencedType('communities','community')
                 },
                 /*
-                Hooks for psot-processing can be registered to perform desired things, like clear a cache,
+                Hooks for post-processing can be registered to perform desired things, like clear a cache,
                 do further processing, etc..
 
                  - afterupdate
@@ -170,11 +178,10 @@ roa.configure(app,pg,
 
                 These post-processing functions receive 2 arguments:
 
-                 - a 'db' object, that can be used to call roa4node.executeSQL.
-                   This object contains 3 things :
+                 - a 'db' object, that can be used to call roa4node.utils.executeSQL() and roa4node.utils.prepareSQL().
+                   This object contains 2 things :
                     - client : a pg-connect client object
                     - done : a pg-connect done function
-                   You can prepare a SQL statement by using roa4node.prepareSQL(db)
 
                  - the element that was just updated / created.
 
@@ -217,25 +224,27 @@ roa.configure(app,pg,
                 ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
+                    title: "A messages posted to the LETS members.",
                     type: "object",
                     properties : {
-                        person: $s.permalink("/persons"),
+                        person: $s.permalink("/persons","A permalink to the person that placed the message."),
                         type: {
                             type: "string",
                             description: "Is this message offering something, or is it requesting something ?",
                             enum: ["offer","request"]
                         },
-                        title: $s.string(1,256),
-                        description: $s.string(0,1024),
-                        amount: $s.numeric,
-                        unit: $s.string(0,32),
-                        community: $s.permalink("/communities")
+                        title: $s.string(1,256,"A short summary of the message. A plain text string."),
+                        description: $s.string(0,1024,"A more elaborate description. An HTML string."),
+                        amount: $s.numeric("Amount suggested by the author."),
+                        unit: $s.string(0,32,"Unit in which amount was suggested by the author."),
+                        community: $s.permalink("/communities","In what community was the message placed ? The permalink to the community.")
                     },
                     required: ["person","type","title","community"]
                 },
                 query: {
                     communities: filterReferencedType("communities","community"),
-                    postedSince: messagesPostedSince
+                    postedSince: messagesPostedSince, // For compatability, to be removed.
+                    modifiedsince: messagesPostedSince
                 }
             },
             {
@@ -264,18 +273,22 @@ roa.configure(app,pg,
                 ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    name: $s.string(1,256),
-                    street: $s.string(1,256),
-                    streetnumber: $s.string(1,16),
-                    streetbus: $s.string(1,16),
-                    zipcode: $s.zipcode,
-                    city: $s.string(1,64),
-                    phone: $s.phone,
-                    email: $s.email,
-                    adminpassword: $s.string(5,64),
-                    website: $s.url,
-                    facebook: $s.url,
-                    currencyname: $s.string(1,32),
+                    title: "A local group in the LETS system.",
+                    type: "object",
+                    properties: {
+                        name: $s.string(1,256,"Name of this group. Normally named 'LETS [locale]'."),
+                        street: $s.string(1,256,"Street of the organisational seat address."),
+                        streetnumber: $s.string(1,16,"Street number of the organisational seat address."),
+                        streetbus: $s.string(1,16,"Postal box of the organisational seat address."),
+                        zipcode: $s.zipcode("4 digit postal code of the city for the organisational seat address."),
+                        city: $s.string(1,64,"City for the organisational seat address."),
+                        phone: $s.phone("Contact phone number for the group."),
+                        email: $s.email("Contact email for the group."),
+                        adminpassword: $s.string(5,64,"Administrative password for the group."),
+                        website: $s.url("Website URL for the group."),
+                        facebook: $s.url("URL to the facebook page of the group."),
+                        currencyname: $s.string(1,32,"Name of the local currency for the group.")
+                    },
                     required: ["name", "street", "streetnumber", "zipcode", "city", "phone", "email", "adminpassword", "currencyname"]
                 },
                 validate: [ validateCommunities ]
@@ -301,11 +314,15 @@ roa.configure(app,pg,
                 ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    transactiontimestamp: $s.timestamp,
-                    fromperson: $s.permalink("/persons"),
-                    toperson: $s.permalink("/persons"),
-                    description: $s.string(1,256),
-                    amount: $s.numeric,
+                    title: "A single transaction between 2 people.",
+                    type: "object",
+                    properties: {
+                        transactiontimestamp: $s.timestamp("Date and time when the transaction was recorded."),
+                        fromperson: $s.permalink("/persons","A permalink to the person that sent currency."),
+                        toperson: $s.permalink("/persons","A permalink to the person that received currency."),
+                        description: $s.string(1,256,"A description, entered by the person sending, of the transaction."),
+                        amount: $s.numeric("The amount of currency sent. This unit is expressed as 20 units/hour, irrelevant of the group's currency settings.")
+                    },
                     required: ["fromperson","toperson","description","amount"]
                 },
                 afterinsert : [
@@ -345,8 +362,13 @@ roa.configure(app,pg,
                 ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    community: $s.permalink("/communities"),
-                    approved: $s.permalink("/communities")
+                    title: "An approval from one group to share it's messages with another group.",
+                    type: "object",
+                    properties : {
+                        community: $s.permalink("/communities","A permalink to the community that approved access to it's information."),
+                        approved: $s.permalink("/communities","A permalink to the community that was granted access.")
+                    },
+                    required: ["community","approved"]
                 },
                 query : {
                     approved: filterReferencedType("communities","approved")
@@ -372,13 +394,19 @@ roa.configure(app,pg,
                 ],
                 schemaUtils: {
                     $schema: "http://json-schema.org/schema#",
-                    person: $s.permalink("/persons"),
-                    interletsApproval: $s.permalink("/interletsapprovals"),
-                    active: $s.boolean
+                    title: "Activation of an interletsapproval for a specific user.",
+                    type: "object",
+                    properties: {
+                        person: $s.permalink("/persons","A permalink to the person who configured this interlets setting."),
+                        interletsapproval: $s.permalink("/interletsapprovals","A permalink to the approval between two groups."),
+                        active: $s.boolean("True if the user wants to include the interlets information from the approved group. False if the user does not want to see the other group's information.")
+                    },
+                    required: ["person","interletsapproval","active"]
                 },
                 validate: [],
                 query : {
-                    person : filterReferencedType("persons","person")
+                    person : filterReferencedType("persons","person"),
+                    persons : filterReferencedType("persons","person")
                 },
                 beforeinsert : [],
                 beforeupdate : [],

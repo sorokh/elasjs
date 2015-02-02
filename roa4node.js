@@ -879,7 +879,7 @@ exports = module.exports = {
     },
 
     schemaUtils : {
-        permalink: function(type) {
+        permalink: function(type, description) {
             var parts = type.split("/");
             var name = parts[1];
 
@@ -890,61 +890,82 @@ exports = module.exports = {
                         type: "string",
                         pattern: "^\/" + name + "\/[-0-9a-f].*$",
                         minLength: name.length + 38,
-                        maxLength: name.length + 38
+                        maxLength: name.length + 38,
+                        description: description
                     }
                 },
                 required: ["href"]
             };
         },
 
-        string: function(min, max) {
+        string: function(min, max, description) {
             return {
                 type: "string",
                 minLength: min,
-                maxLength: max
+                maxLength: max,
+                description: description
             }
         },
 
-        numeric: {
-            type: "numeric",
-            multipleOf: "1.0"
+        numeric: function(description) {
+            return {
+                type: "numeric",
+                multipleOf: "1.0",
+                description: description
+            }
         },
 
-        email: {
-            type: "string",
-            format: "email",
-            minLength: 1,
-            maxLength: 32
+        email: function(description) {
+            return {
+                type: "string",
+                format: "email",
+                minLength: 1,
+                maxLength: 32,
+                description: description
+            }
         },
 
-        url: {
-            type: "string",
-            minLength: 1,
-            maxLength: 256,
-            format: "uri"
+        url: function(description) {
+            return {
+                type: "string",
+                minLength: 1,
+                maxLength: 256,
+                format: "uri",
+                description: description
+            }
         },
 
-        zipcode: {
-            type: "number",
-            multipleOf: 1.0,
-            minimum: 1000,
-            maximum: 9999
+        zipcode: function(description) {
+            return {
+                type: "string",
+                pattern: "^[0-9][0-9][0-9][0-9]$",
+                description: description
+            };
         },
 
-        phone: {
-            type: "string",
-            pattern: "^[0-9]*$",
-            minLength: 9,
-            maxLength: 10
+        phone: function(description) {
+            return {
+                type: "string",
+                pattern: "^[0-9]*$",
+                minLength: 9,
+                maxLength: 10,
+                description: description
+            };
         },
 
-        timestamp : {
-            type: "string",
-            format: "date-time"
+        timestamp : function(description) {
+            return {
+                type: "string",
+                format: "date-time",
+                description: description
+            }
         },
 
-        boolean : {
-            type: "boolean"
+        boolean : function(description) {
+            return {
+                type: "boolean",
+                description: description
+            }
         }
     }
 }
