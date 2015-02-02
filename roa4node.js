@@ -279,6 +279,9 @@ function getSchemaValidationErrors(json, schema) {
             var current = result.errors[i];
             var err = {};
             err.code = asCode(current.message);
+            if(current.property && current.property.indexOf("instance.") == 0) {
+                err.path = current.property.substring(9);
+            }
             ret.errors.push(err);
         }
         return ret;
@@ -404,12 +407,11 @@ function executePutInsideTransaction(db, url, element) {
     cl(element);
 
     if (mapping.schemaUtils) {
-        var error = getSchemaValidationErrors(element, mapping.schemaUtils);
-        if (error) {
-            cl("Returning 409 Conflict with errors to client.");
-            resp.set('Content-Type', 'application/json');
-            resp.status(409).send(error);
-            return;
+        var errors = getSchemaValidationErrors(element, mapping.schemaUtils);
+        if (errors) {
+            var deferred = Q.defer();
+            deferred.reject(errors);
+            return deferred.promise;
         } else {
             cl("Schema validation passed.");
         }
@@ -676,8 +678,8 @@ exports = module.exports = {
                             db.client.query("ROLLBACK", function (rollbackerr) {
                                 // If err is defined, client will be removed from pool.
                                 db.done(rollbackerr);
-                                cl("ROLLBACK DONE. Sending 500 Internal Server Error. [" + puterr.toString() + "]");
-                                resp.status(500).send("Internal Server Error. [" + puterr.toString() + "]");
+                                cl("ROLLBACK DONE.");
+                                resp.status(409).send(puterr);
                                 resp.end();
                             });
                         });
@@ -788,8 +790,8 @@ exports = module.exports = {
                         db.client.query("ROLLBACK", function (rollbackerr) {
                             // If err is defined, client will be removed from pool.
                             db.done(rollbackerr);
-                            cl("ROLLBACK DONE. Sending 500 Internal Server Error. [" + puterr.toString() + "]");
-                            resp.status(500).send("Internal Server Error. [" + puterr.toString() + "]");
+                            cl("ROLLBACK DONE.");
+                            resp.status(500).send(puterr);
                             resp.end();
                         });
                     });
