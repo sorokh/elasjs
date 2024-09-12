@@ -7,9 +7,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "~4.9.x",
+    "express": "~4.21.0",
     "pg": "2.x",
-    "body-parser": "~1.9.0",
+    "body-parser": "~1.20.3",
     "jsonschema": "~1.0.0",
     "q": "~1.0.1",
     "mandrill-api":">=1.0.2",
